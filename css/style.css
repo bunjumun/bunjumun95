@@ -162,6 +162,13 @@ input[type="text"], input[type="password"], textarea {
 #doom-container {
   z-index: 20;
   background: black;
+  overflow: hidden;
+}
+
+#doomCanvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 #doom-container iframe {

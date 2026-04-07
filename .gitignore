@@ -1,7 +1,5 @@
-# DOOM binary assets (too large for git, obtained via releases)
-doom/doom.js
-doom/doom.wasm
-doom/doom1.wad
+# DOOM large data file — use git-lfs if repo grows
+# doom/web/doom1.data
 
 # Build artifacts
 node_modules/
