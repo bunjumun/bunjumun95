@@ -167,36 +167,63 @@ class MazeEngine {
     const BRICK_H  = 22;
     const BRICK_W  = 52;
 
-    ctx.fillStyle = '#7A5448';
+    // Mortar background with noise
+    ctx.fillStyle = '#64534F';
     ctx.fillRect(0, 0, S, S);
 
-    ctx.fillStyle = '#B87A6B';
+    // Draw bricks with varied colors and basic 3D shadow/highlight
     for (let y = 0; y < S + BRICK_H; y += BRICK_H + MORTAR_W) {
-      const rowIdx  = Math.floor(y / (BRICK_H + MORTAR_W));
-      const offset  = (rowIdx % 2) * (BRICK_W / 2 + MORTAR_W / 2);
+      const rowIdx = Math.floor(y / (BRICK_H + MORTAR_W));
+      const offset = (rowIdx % 2) * (BRICK_W / 2 + MORTAR_W / 2);
+      
       for (let x = -BRICK_W; x < S + BRICK_W; x += BRICK_W + MORTAR_W) {
-        ctx.fillRect(
-          x + offset + MORTAR_W / 2,
-          y + MORTAR_W / 2,
-          BRICK_W,
-          BRICK_H
-        );
+        // Randomize brick base color slightly
+        const r = 160 + Math.random() * 40;
+        const g = 90 + Math.random() * 30;
+        const b = 70 + Math.random() * 20;
+        
+        const bx = x + offset + MORTAR_W / 2;
+        const by = y + MORTAR_W / 2;
+        
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.fillRect(bx, by, BRICK_W, BRICK_H);
+        
+        // Highlights (top, left)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.fillRect(bx, by, BRICK_W, 2);
+        ctx.fillRect(bx, by, 2, BRICK_H);
+        
+        // Shadows (bottom, right)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(bx, by + BRICK_H - 2, BRICK_W, 2);
+        ctx.fillRect(bx + BRICK_W - 2, by, 2, BRICK_H);
       }
     }
 
-    // Slight noise for grime
+    // Heavy noise and grime overlay (Win95 style dithering/noise)
     const id = ctx.getImageData(0, 0, S, S);
     for (let i = 0; i < id.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 20;
-      id.data[i]     = Math.min(255, Math.max(0, id.data[i]     + n));
-      id.data[i + 1] = Math.min(255, Math.max(0, id.data[i + 1] + n));
-      id.data[i + 2] = Math.min(255, Math.max(0, id.data[i + 2] + n));
+      const x = (i / 4) % S;
+      const y = Math.floor((i / 4) / S);
+      
+      // Basic noise
+      let n = (Math.random() - 0.5) * 35;
+      
+      // Grime gradient (darker at bottom)
+      const grime = (y / S) * 20;
+      
+      id.data[i]     = Math.min(255, Math.max(0, id.data[i]     + n - grime));
+      id.data[i + 1] = Math.min(255, Math.max(0, id.data[i + 1] + n - grime));
+      id.data[i + 2] = Math.min(255, Math.max(0, id.data[i + 2] + n - grime));
     }
     ctx.putImageData(id, 0, 0);
 
     const tex = new THREE.CanvasTexture(cv);
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(1, 0.9);
+    // Performance: nearest filter gives it that crispy retro look
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestFilter;
     return tex;
   }
 
@@ -206,31 +233,90 @@ class MazeEngine {
     cv.width = cv.height = S;
     const ctx = cv.getContext('2d');
 
-    ctx.fillStyle = '#505050';
+    // Base concrete color
+    ctx.fillStyle = '#484A4D';
     ctx.fillRect(0, 0, S, S);
+    
+    // Add noise for concrete texture before drawing grid
+    const id = ctx.getImageData(0, 0, S, S);
+    for (let i = 0; i < id.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * 15;
+      id.data[i]     = Math.min(255, Math.max(0, id.data[i]     + n));
+      id.data[i + 1] = Math.min(255, Math.max(0, id.data[i + 1] + n));
+      id.data[i + 2] = Math.min(255, Math.max(0, id.data[i + 2] + n));
+    }
+    ctx.putImageData(id, 0, 0);
 
-    // Tile grid lines
-    ctx.strokeStyle = '#383838';
-    ctx.lineWidth   = 2;
-    for (let i = 0; i <= S; i += 64) {
-      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, S); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(S, i); ctx.stroke();
+    // Draw grid lines with highlights for depth
+    const tileSize = 64;
+    for (let i = 0; i <= S; i += tileSize) {
+      // Dark line
+      ctx.fillStyle = '#2A2C2E';
+      ctx.fillRect(i, 0, 2, S); // vertical
+      ctx.fillRect(0, i, S, 2); // horizontal
+      
+      // Light highlight line
+      ctx.fillStyle = '#5C5E61';
+      ctx.fillRect(i + 2, 0, 1, S); // vertical highlight
+      ctx.fillRect(0, i + 2, S, 1); // horizontal highlight
+    }
+    
+    // Add some dirt patches
+    for(let p = 0; p < 10; p++) {
+      ctx.fillStyle = 'rgba(20, 20, 20, 0.1)';
+      ctx.beginPath();
+      ctx.arc(Math.random() * S, Math.random() * S, Math.random() * 30 + 10, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     const tex = new THREE.CanvasTexture(cv);
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(this.GRID_W / 2, this.GRID_H / 2);
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestFilter;
     return tex;
   }
 
   _makeCeilingTexture() {
-    const S = 64;
+    const S = 128; // Increased resolution slightly for panel details
     const cv = document.createElement('canvas');
     cv.width = cv.height = S;
     const ctx = cv.getContext('2d');
-    ctx.fillStyle = '#BFBFBF';
+    
+    // Metal base
+    ctx.fillStyle = '#1A1C1A';
     ctx.fillRect(0, 0, S, S);
+    
+    // Panel grid
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(2, 2, S - 4, S - 4);
+    
+    // Industrial grating lines
+    ctx.strokeStyle = '#2A2D2A';
+    ctx.lineWidth = 1;
+    for(let i = 4; i < S; i += 8) {
+        ctx.beginPath();
+        ctx.moveTo(i, 2);
+        ctx.lineTo(i, S - 2);
+        ctx.stroke();
+    }
+    
+    // Add heavy noise for industrial feel
+    const id = ctx.getImageData(0, 0, S, S);
+    for (let i = 0; i < id.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * 10;
+      id.data[i]     = Math.min(255, Math.max(0, id.data[i]     + n));
+      id.data[i + 1] = Math.min(255, Math.max(0, id.data[i + 1] + n));
+      id.data[i + 2] = Math.min(255, Math.max(0, id.data[i + 2] + n));
+    }
+    ctx.putImageData(id, 0, 0);
+
     const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(this.GRID_W / 2, this.GRID_H / 2);
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestFilter;
     return tex;
   }
 

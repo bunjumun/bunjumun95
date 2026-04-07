@@ -135,14 +135,29 @@ class CuratorAlgorithm {
     return slots;
   }
 
-  /** Remove slots that fall within DEAD_ZONE units of an already-kept slot. */
+  /** 
+   * Remove slots that fall within DEAD_ZONE units of an already-kept slot.
+   * 
+   * Math & Performance Rationale:
+   * 1. DEAD_ZONE = 5: With a CELL_SIZE of 4 and frame width of 1.8, a 5-unit distance 
+   *    guarantees frames are at least 1.25 cells apart. This leaves ~3.2 units between 
+   *    frame centers (1.4 units of physical gap), preventing visual clutter and 
+   *    overlapping interactable areas.
+   * 2. Distance from frame center vs wall face: We use center-to-center distance since 
+   *    frames protrude minimally (0.06 units).
+   * 3. Performance: We use squared distance comparison (dx*dx + dz*dz < DEAD_ZONE^2) 
+   *    to avoid the expensive Math.sqrt() operation in the inner loop. 
+   *    While this is O(n^2), max slots N is small (typically < 100), making this O(N^2) 
+   *    check negligible. A spatial hash/quadtree is unnecessary overhead for this scale.
+   */
   _applyDeadZone(slots) {
     const kept = [];
+    const deadZoneSq = this.DEAD_ZONE * this.DEAD_ZONE;
     for (const slot of slots) {
       const tooClose = kept.some(k => {
         const dx = slot.wx - k.wx;
         const dz = slot.wz - k.wz;
-        return Math.sqrt(dx * dx + dz * dz) < this.DEAD_ZONE;
+        return (dx * dx + dz * dz) < deadZoneSq;
       });
       if (!tooClose) kept.push(slot);
     }
