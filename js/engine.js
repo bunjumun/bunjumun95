@@ -330,17 +330,15 @@ class MazeEngine {
   placeFrames(slots, exhibits) {
     const cs  = this.CELL_SIZE;
     const ey  = this.EYE_HEIGHT;
-
-    // Offset frame slightly out from wall face so it protrudes
     const PROTRUDE = 0.06;
 
     // Frame border material (dark gold)
     const borderMat = new THREE.MeshLambertMaterial({ color: 0x5C4000 });
-    // Default panel material (dark screen)
-    const defaultPanelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
 
-    slots.forEach((slot, idx) => {
-      const exhibit = exhibits[idx] || null;
+    // Place ONE frame per exhibit, using the first N slots
+    exhibits.forEach((exhibit, idx) => {
+      const slot = slots[idx];
+      if (!slot) return;  // Not enough slots for this exhibit
 
       // ── Frame geometry: thin box border + inner panel ──────────────────
       const fw = 1.8;   // frame width
@@ -364,10 +362,10 @@ class MazeEngine {
 
       group.add(hBar, hBar2, vBar, vBar2);
 
-      // Inner panel
-      const panelMat = exhibit && exhibit.thumbnail
+      // Inner panel with exhibit thumbnail (if available)
+      const panelMat = exhibit.thumbnail
         ? this._makeThumbMat(exhibit.thumbnail)
-        : defaultPanelMat;
+        : new THREE.MeshLambertMaterial({ color: 0x222222 });
 
       const panel = new THREE.Mesh(
         new THREE.PlaneGeometry(fw - bt * 2, fh - bt * 2),
@@ -381,22 +379,22 @@ class MazeEngine {
       group.position.y = ey;
 
       switch (facing) {
-        case 'pz':  // south face → player approaches from south, frame faces +Z
+        case 'pz':  // south face
           group.position.x = wx;
           group.position.z = wz + PROTRUDE;
           group.rotation.y = 0;
           break;
-        case 'nz':  // north face → frame faces -Z
+        case 'nz':  // north face
           group.position.x = wx;
           group.position.z = wz - PROTRUDE;
           group.rotation.y = Math.PI;
           break;
-        case 'px':  // east face → frame faces +X
+        case 'px':  // east face
           group.position.x = wx + PROTRUDE;
           group.position.z = wz;
           group.rotation.y = -Math.PI / 2;
           break;
-        case 'nx':  // west face → frame faces -X
+        case 'nx':  // west face
           group.position.x = wx - PROTRUDE;
           group.position.z = wz;
           group.rotation.y = Math.PI / 2;

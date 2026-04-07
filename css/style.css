@@ -191,6 +191,41 @@ input[type="text"], input[type="password"], textarea {
   user-select: none;
 }
 
+/* ── Settings Button ──────────────────────────────────────────────────── */
+#settings-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--win95-bg);
+  color: var(--text-dark);
+  border: none;
+  box-shadow: var(--border-outset);
+  font-size: 18px;
+  font-family: inherit;
+  cursor: pointer;
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+#settings-btn:hover {
+  background: #DFDFDF;
+}
+
+#settings-btn:active {
+  box-shadow: var(--border-inset);
+}
+
+#settings-btn:focus {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
 #interact-hint {
   position: fixed;
   bottom: 80px;
