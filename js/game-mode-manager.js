@@ -103,8 +103,6 @@ class GameModeManager {
 
     this.currentMode = 'maze';
     this._emit('maze');
-
-    setTimeout(() => this.mazeCanvas?.requestPointerLock(), 150);
   }
 
   // ── Canvas Helpers ───────────────────────────────────────────────────────────

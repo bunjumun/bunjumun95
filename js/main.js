@@ -155,18 +155,9 @@
   // Show guide on first load
   setTimeout(showGuideOverlay, 2000);
 
-  // ── 10. Pointer-lock overlay ─────────────────────────────────────────────────
+  // ── 10. Hide pointer-lock overlay (no longer needed) ───────────────────────
   const lockOverlay = document.getElementById('lock-overlay');
-
-  document.addEventListener('pointerlockchange', () => {
-    const locked = !!document.pointerLockElement;
-    if (lockOverlay) lockOverlay.classList.toggle('hidden', locked);
-  });
-
-  // Click-to-lock on overlay
-  lockOverlay?.addEventListener('click', () => {
-    canvas.requestPointerLock();
-  });
+  if (lockOverlay) lockOverlay.style.display = 'none';
 
   // ── 11. Start render loop ────────────────────────────────────────────────────
   progress(100);

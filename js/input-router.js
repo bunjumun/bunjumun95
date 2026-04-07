@@ -79,13 +79,8 @@ class InputRouter {
     const mode = this.modeManager.getCurrentMode();
     if (mode === 'transitioning') return;
 
-    if (mode === 'maze') {
-      // Re-acquire maze pointer lock on click if lost
-      const maze = document.getElementById('maze-canvas');
-      if (maze && document.pointerLockElement !== maze) {
-        maze.requestPointerLock();
-      }
-    }
+    // Maze uses free-mouse look — no pointer lock needed
+    if (mode === 'maze') { /* no-op */ }
 
     if (mode === 'doom' && this.doomRaycaster) {
       // Shoot detection — check if crosshair hits a painting
