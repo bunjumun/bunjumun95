@@ -30,9 +30,14 @@ class DoomEngine {
       // PrBoom Module config
       window.Module = {
         canvas: this.canvas,
-        TOTAL_MEMORY: 67108864, // 64 MB
+        TOTAL_MEMORY: 268435456, // 256 MB (WASM requires 4096 pages × 64KB)
         print: (text) => console.log('[PrBoom]', text),
         printErr: (text) => console.error('[PrBoom Error]', text),
+        locateFile: (path) => {
+          if (path === 'doom1.wasm') return 'doom/doom.wasm';
+          if (path === 'doom1.data') return 'doom/web/doom1.data';
+          return `doom/${path}`;
+        },
         preRun: [
           () => {
             // Inject custom gallery.wad to Emscripten VFS

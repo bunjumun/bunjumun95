@@ -12,3 +12,10 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local secrets (never commit)
+.env
+*.env
+settings.local.json
+.claude/settings.local.json
+.llama-key

@@ -10,10 +10,10 @@
 [0;34m▶ PHASE 1: FILE VALIDATION[0m
 
 [0;34m▶ File Existence Validation[0m
-  [0;31m❌ doom.js NOT FOUND[0m
-  [0;31m❌ doom.wasm NOT FOUND[0m
-  [0;31m❌ doom1.wad NOT FOUND[0m
-  [0;31m❌ gallery.wad NOT FOUND[0m
+  [0;32m✅ doom/doom.js exists (340K)[0m
+  [0;32m✅ doom/doom.wasm exists (1.0M)[0m
+  [0;32m✅ doom/web/doom1.data exists ( 92M)[0m
+  [0;32m✅ doom/gallery.wad exists (4.0K)[0m
   [0;32m✅ index.html exists (4.0K)[0m
   [0;32m✅ js/main.js exists (8.0K)[0m
   [0;32m✅ js/doom-engine.js exists (4.0K)[0m
@@ -22,16 +22,18 @@
   [0;32m✅ js/explosion.js exists (8.0K)[0m
 
 [0;34m▶ File Size Validation[0m
-  [0;31m❌ doom.js: NOT FOUND[0m
-  [0;31m❌ doom.wasm: NOT FOUND[0m
-  [0;31m❌ doom1.wad: NOT FOUND[0m
-  [0;31m❌ gallery.wad: NOT FOUND[0m
+  [0;32m✅ doom/doom.js: 340KB (expected 250-400KB)[0m
+  [0;32m✅ doom/doom.wasm: 1032KB (expected 900-1200KB)[0m
+  [0;32m✅ doom/web/doom1.data: 94356KB (expected 80000-100000KB)[0m
+  [0;32m✅ doom/gallery.wad: 4KB (expected 1-2000KB)[0m
 
 [0;34m▶ File Type Validation[0m
+  [0;32m✅ doom/doom.js: Valid JavaScript (contains Emscripten markers)[0m
+  [0;32m✅ doom/doom.wasm: Valid WebAssembly/ELF format[0m
+  [1;33m⚠️  doom/gallery.wad: Could not verify WAD header (stub may be ok)[0m
 
 [0;34m▶ DOOM WAD Structure Validation[0m
-  [0;31m❌ doom1.wad: File not found[0m
-  [0;31m❌ gallery.wad: File not found[0m
+  [0;32m✅ doom/gallery.wad: File present (12 bytes)[0m
 
 [0;34m═══════════════════════════════════════════════════════════════[0m
 
@@ -39,7 +41,7 @@
 
 [0;34m▶ Starting HTTP Server[0m
   Checking for existing servers on port 8000...
-  [0;32m✅ HTTP server started on port 8000 (PID: 18673)[0m
+  [0;32m✅ HTTP server started on port 8000 (PID: 21769)[0m
 
 [0;34m▶ HTTP Server Load Test[0m
   [0;32m✅ index.html loads successfully (HTTP 200)[0m
@@ -50,18 +52,15 @@
   [0;32m✅ js/doom-bridge.js: HTTP 200[0m
   [0;32m✅ js/explosion.js: HTTP 200[0m
   [0;32m✅ css/style.css: HTTP 200[0m
-  [0;31m❌ doom.js: HTTP 404[0m
-  [0;31m❌ doom.wasm: HTTP 404[0m
+  [0;32m✅ doom/doom.js: HTTP 200[0m
+  [0;32m✅ doom/doom.wasm: HTTP 200[0m
 
 [0;34m═══════════════════════════════════════════════════════════════[0m
 
 [0;34m▶ PHASE 3: CODE QUALITY[0m
 
 [0;34m▶ JavaScript Syntax Validation[0m
-  [0;32m✅ js/main.js: Valid JavaScript syntax[0m
-  [0;32m✅ js/doom-engine.js: Valid JavaScript syntax[0m
-  [0;32m✅ js/doom-bridge.js: Valid JavaScript syntax[0m
-  [0;32m✅ js/explosion.js: Valid JavaScript syntax[0m
+  [1;33m⚠️  Node.js not available - skipping syntax check[0m
 
 [0;34m▶ HTML Structure Validation[0m
   [0;32m✅ index.html: doom-engine.js script tag found[0m
@@ -81,11 +80,10 @@
 [0;34m▶ TEST SUMMARY[0m
 
 Tests Run:    10
-Tests Passed: [0;32m20[0m
-Tests Failed: [0;31m12[0m
+Tests Passed: [0;32m29[0m
+Tests Failed: [0;31m0[0m
 
-[0;31m╔════════════════════════════════════════════════════════════════╗[0m
-[0;31m║  ❌ 12 TEST(S) FAILED — See details above            ║[0m
-[0;31m╚════════════════════════════════════════════════════════════════╝[0m
-  Stopping HTTP server (PID: 18673)...
-test-doom.sh: line 61: 18673 Terminated: 15          python3 -m http.server $SERVER_PORT > /tmp/http_server.log 2>&1
+[0;32m╔════════════════════════════════════════════════════════════════╗[0m
+[0;32m║  ✅ ALL TESTS PASSED — Ready for GitHub Pages deployment      ║[0m
+[0;32m╚════════════════════════════════════════════════════════════════╝[0m
+  Stopping HTTP server (PID: 21769)...
