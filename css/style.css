@@ -10,6 +10,11 @@
   --border-dark:     #808080;
   --win95-bg:        #C0C0C0;
   --fog-color:       #000000;
+  
+  /* Win95 3D borders */
+  --border-inset: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px #808080;
+  --border-outset: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+  --border-window: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff;
 }
 
 *, *::before, *::after {
@@ -24,6 +29,101 @@ html, body {
   overflow: hidden;
   background: var(--fog-color);
   font-family: 'Courier New', Courier, monospace;
+}
+
+/* ── Win95 Form Controls & UI Components ─────────────────────────────── */
+button, input[type="button"], input[type="submit"] {
+  background: var(--win95-bg);
+  color: var(--text-dark);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 4px 12px;
+  border: none;
+  box-shadow: var(--border-outset);
+  cursor: pointer;
+  outline: none;
+}
+
+button:active, button.active, input[type="button"]:active {
+  box-shadow: var(--border-inset);
+  padding: 5px 11px 3px 13px; /* shift text down-right slightly */
+}
+
+button:disabled {
+  color: #808080;
+  text-shadow: 1px 1px 0 #fff;
+  cursor: not-allowed;
+}
+
+button:focus, input:focus, textarea:focus, select:focus {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+input[type="text"], input[type="password"], textarea {
+  background: #fff;
+  color: var(--text-dark);
+  border: none;
+  box-shadow: var(--border-inset);
+  padding: 4px 6px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+/* ── Win95 Window Frame ─────────────────────────────────────────────── */
+.win95-window {
+  background: var(--win95-bg);
+  box-shadow: var(--border-window);
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+}
+
+.win95-titlebar {
+  background: var(--primary-brand);
+  color: var(--text-light);
+  padding: 2px 4px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ── Win95 Scrollbars ───────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+  background: var(--win95-bg);
+}
+
+::-webkit-scrollbar-track {
+  background: #dfdfdf;
+  background-image: linear-gradient(45deg, #c0c0c0 25%, transparent 25%, transparent 75%, #c0c0c0 75%, #c0c0c0), 
+                    linear-gradient(45deg, #c0c0c0 25%, transparent 25%, transparent 75%, #c0c0c0 75%, #c0c0c0);
+  background-size: 2px 2px;
+  background-position: 0 0, 1px 1px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--win95-bg);
+  box-shadow: var(--border-outset);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--win95-bg);
+  box-shadow: var(--border-inset);
+}
+
+::-webkit-scrollbar-button {
+  background: var(--win95-bg);
+  box-shadow: var(--border-outset);
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-button:active {
+  box-shadow: var(--border-inset);
 }
 
 /* ── Canvas ──────────────────────────────────────────────────────────── */
