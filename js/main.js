@@ -17,6 +17,27 @@
     if (res.ok) gallery = await res.json();
   } catch (_) { /* offline / first run */ }
 
+  // ── 0b. Background audio (external, no repo bloat) ────────────────────────
+  let bgAudio = null;
+  function applyAudioConfig(cfg) {
+    if (bgAudio) { bgAudio.pause(); bgAudio = null; }
+    if (!cfg?.url) return;
+    bgAudio = new Audio(cfg.url);
+    bgAudio.volume = (cfg.volume ?? 60) / 100;
+    bgAudio.loop   = cfg.loop !== false;
+    // Browsers require user gesture before autoplay — play on first interaction
+    const startOnGesture = () => {
+      bgAudio?.play().catch(() => {});
+      window.removeEventListener('click', startOnGesture);
+      window.removeEventListener('keydown', startOnGesture);
+    };
+    window.addEventListener('click', startOnGesture);
+    window.addEventListener('keydown', startOnGesture);
+  }
+  applyAudioConfig(gallery.audio);
+  // Admin can update audio live without page reload
+  window.addEventListener('gallery:audio-updated', (e) => applyAudioConfig(e.detail));
+
   const exhibitCount = gallery.exhibits.length || 0;
 
   // ── 1. Generate gallery.wad from exhibits ────────────────────────────────────

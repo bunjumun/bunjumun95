@@ -244,6 +244,31 @@ class AdminConsole {
               </div>
             </div>
 
+            <!-- ── Audio Config ── -->
+            <div class="panel" id="audio-panel">
+              <div class="panel-title">AUDIO — EXTERNAL SOURCE</div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label>Background Music URL (offsite .mp3 / .ogg / stream)
+                  <input type="text" id="audio-url" placeholder="https://…/music.mp3">
+                </label>
+                <div class="row" style="align-items:center; gap:10px;">
+                  <label style="flex:1; margin:0;">Volume (0–100)
+                    <input type="range" id="audio-vol" min="0" max="100" value="60"
+                      style="width:100%; margin-top:4px; accent-color:#000080;">
+                  </label>
+                  <span id="audio-vol-label" style="font-size:11px; min-width:28px; text-align:right;">60</span>
+                  <label style="flex:0 0 auto; display:flex; align-items:center; gap:4px; margin:0; cursor:pointer;">
+                    <input type="checkbox" id="audio-loop" checked> LOOP
+                  </label>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn" id="audio-test-btn">▶ TEST</button>
+                  <button class="btn" id="audio-stop-btn">■ STOP</button>
+                  <button class="btn primary" id="audio-save-btn" disabled>💾 SAVE AUDIO CONFIG</button>
+                </div>
+              </div>
+            </div>
+
             <!-- ── New Exhibit ── -->
             <div class="panel" id="add-panel">
               <div class="panel-title">NEW EXHIBIT</div>
@@ -384,6 +409,32 @@ class AdminConsole {
     // ── Save ──
     $('save-btn').addEventListener('click', () => this._saveExhibit());
 
+    // ── Audio ──
+    this._testAudio = null;
+
+    $('audio-vol').addEventListener('input', () => {
+      $('audio-vol-label').textContent = $('audio-vol').value;
+      if (this._testAudio) this._testAudio.volume = $('audio-vol').value / 100;
+    });
+
+    $('audio-test-btn').addEventListener('click', () => {
+      const url = $('audio-url').value.trim();
+      if (!url) { this._log('ERROR: enter an audio URL to test.'); return; }
+      if (this._testAudio) { this._testAudio.pause(); this._testAudio = null; }
+      this._testAudio = new Audio(url);
+      this._testAudio.volume = $('audio-vol').value / 100;
+      this._testAudio.loop   = $('audio-loop').checked;
+      this._testAudio.play().catch(e => this._log(`Audio error: ${e.message}`));
+      this._log(`Testing: ${url}`);
+    });
+
+    $('audio-stop-btn').addEventListener('click', () => {
+      if (this._testAudio) { this._testAudio.pause(); this._testAudio = null; }
+      this._log('Audio stopped.');
+    });
+
+    $('audio-save-btn').addEventListener('click', () => this._saveAudio());
+
     this._thumbDataUrl = null;
   }
 
@@ -436,8 +487,9 @@ class AdminConsole {
     const label = this.shadow.getElementById('auth-label');
     dot.className   = 'status-dot green';
     label.textContent = 'UNLOCKED';
-    this.shadow.getElementById('save-btn').disabled    = false;
-    this.shadow.getElementById('refresh-btn').disabled = false;
+    this.shadow.getElementById('save-btn').disabled       = false;
+    this.shadow.getElementById('refresh-btn').disabled    = false;
+    this.shadow.getElementById('audio-save-btn').disabled = false;
   }
 
   _setLocked() {
@@ -445,8 +497,9 @@ class AdminConsole {
     const label = this.shadow.getElementById('auth-label');
     dot.className     = 'status-dot red';
     label.textContent = 'LOCKED';
-    this.shadow.getElementById('save-btn').disabled    = true;
-    this.shadow.getElementById('refresh-btn').disabled = true;
+    this.shadow.getElementById('save-btn').disabled       = true;
+    this.shadow.getElementById('refresh-btn').disabled    = true;
+    this.shadow.getElementById('audio-save-btn').disabled = true;
     this.shadow.getElementById('exhibit-list').innerHTML =
       '<em style="color:#888;font-size:10px">— unlock to load exhibits —</em>';
   }
@@ -460,6 +513,7 @@ class AdminConsole {
       this.gallery    = gallery;
       this.gallerySha = sha;
       this._renderList();
+      this._populateAudioPanel(gallery);
       this._log(`✓ Loaded ${gallery.exhibits.length} exhibit(s).`);
     } catch (err) {
       this._log(`ERROR loading gallery: ${err.message}`);
@@ -572,6 +626,38 @@ class AdminConsole {
       // Roll back optimistic push
       this._log(`ERROR pushing gallery: ${err.message}`);
     }
+  }
+
+  // ── Audio Config ─────────────────────────────────────────────────────────────
+
+  _populateAudioPanel(gallery) {
+    const cfg = gallery?.audio || {};
+    const $ = (id) => this.shadow.getElementById(id);
+    if (cfg.url)    $('audio-url').value  = cfg.url;
+    if (cfg.volume != null) {
+      $('audio-vol').value      = cfg.volume;
+      $('audio-vol-label').textContent = cfg.volume;
+    }
+    $('audio-loop').checked = cfg.loop !== false;
+  }
+
+  async _saveAudio() {
+    const $ = (id) => this.shadow.getElementById(id);
+    const url    = $('audio-url').value.trim();
+    const volume = parseInt($('audio-vol').value);
+    const loop   = $('audio-loop').checked;
+
+    if (!this.gallery) {
+      this._log('Fetching gallery before save…');
+      await this._loadGallery();
+    }
+
+    this.gallery.audio = url ? { url, volume, loop } : null;
+    this._log(url ? `Saving audio config: ${url}` : 'Clearing audio config…');
+    await this._pushGallery();
+
+    // Signal the live page to pick up new audio config
+    window.dispatchEvent(new CustomEvent('gallery:audio-updated', { detail: this.gallery.audio }));
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────

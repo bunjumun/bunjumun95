@@ -4,6 +4,16 @@
  * Downloads and initializes PrBoom Module, exposes pause/resume/getCanvas.
  */
 
+// Suppress "Cannot find preloaded audio" spam at the global level.
+// doom.js resets Module.printErr after init, so we patch console.error directly.
+;(function() {
+  const _orig = console.error.bind(console);
+  console.error = function(...args) {
+    if (args.some(a => String(a).includes('Cannot find preloaded audio'))) return;
+    _orig(...args);
+  };
+})();
+
 class DoomEngine {
   constructor(containerEl) {
     this.containerEl = containerEl;
@@ -31,8 +41,13 @@ class DoomEngine {
       window.Module = {
         canvas: this.canvas,
         TOTAL_MEMORY: 268435456, // 256 MB (WASM requires 4096 pages × 64KB)
+        arguments: ['-nosound', '-nosfx', '-nomusic'],
         print: (text) => console.log('[PrBoom]', text),
-        printErr: (text) => console.error('[PrBoom Error]', text),
+        printErr: (text) => {
+          // Suppress harmless audio-not-found spam
+          if (text.includes('Cannot find preloaded audio')) return;
+          console.error('[PrBoom Error]', text);
+        },
         locateFile: (path) => {
           if (path === 'doom1.wasm') return 'doom/doom.wasm';
           if (path === 'doom1.data') return 'doom/web/doom1.data';
