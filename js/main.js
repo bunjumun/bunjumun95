@@ -17,11 +17,12 @@
     if (res.ok) gallery = await res.json();
   } catch (_) { /* offline / first run */ }
 
-  // Dynamic maze sizing: scale based on exhibit count
-  // Formula: ROOMS = 5 + Math.ceil(exhibitCount * 1.5)
-  // Examples: 1 exhibit → ~7 rooms, 3 exhibits → ~10 rooms, 10 exhibits → ~20 rooms
-  const exhibitCount = gallery.exhibits.length || 1;
-  const ROOMS = Math.max(5, 5 + Math.ceil(exhibitCount * 1.5));
+  // Dynamic maze sizing: scale based on exhibit count (square-root formula)
+  // Formula: ROOMS = 5 + Math.ceil(Math.sqrt(exhibitCount * 30))
+  // Rationale: Slower growth than linear preserves spaciousness for large galleries
+  // Examples: 1 exhibit → ~10 rooms, 3 exhibits → ~12 rooms, 10 exhibits → ~24 rooms, 20 exhibits → ~29 rooms
+  const exhibitCount = gallery.exhibits.length || 0;
+  const ROOMS = Math.max(5, 5 + Math.ceil(Math.sqrt(exhibitCount * 30)));
 
   // ── 2. Generate maze ────────────────────────────────────────────────────────
   progress(25);
