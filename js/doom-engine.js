@@ -4,16 +4,6 @@
  * Downloads and initializes PrBoom Module, exposes pause/resume/getCanvas.
  */
 
-// Suppress "Cannot find preloaded audio" spam at the global level.
-// doom.js resets Module.printErr after init, so we patch console.error directly.
-;(function() {
-  const _orig = console.error.bind(console);
-  console.error = function(...args) {
-    if (args.some(a => String(a).includes('Cannot find preloaded audio'))) return;
-    _orig(...args);
-  };
-})();
-
 class DoomEngine {
   constructor(containerEl) {
     this.containerEl = containerEl;
@@ -21,6 +11,7 @@ class DoomEngine {
     this.canvas = null;
     this.isReady = false;
     this.isPaused = false;
+    this.isPointerLocked = false;
   }
 
   /**
@@ -41,13 +32,8 @@ class DoomEngine {
       window.Module = {
         canvas: this.canvas,
         TOTAL_MEMORY: 268435456, // 256 MB (WASM requires 4096 pages × 64KB)
-        arguments: ['-nosound', '-nosfx', '-nomusic'],
         print: (text) => console.log('[PrBoom]', text),
-        printErr: (text) => {
-          // Suppress harmless audio-not-found spam
-          if (text.includes('Cannot find preloaded audio')) return;
-          console.error('[PrBoom Error]', text);
-        },
+        printErr: (text) => console.error('[PrBoom Error]', text),
         locateFile: (path) => {
           if (path === 'doom1.wasm') return 'doom/doom.wasm';
           if (path === 'doom1.data') return 'doom/web/doom1.data';
@@ -75,6 +61,7 @@ class DoomEngine {
           setTimeout(() => this._fitCanvas(), 100);
           setTimeout(() => this._fitCanvas(), 500);
           window.addEventListener('resize', () => this._fitCanvas());
+          this._setupPointerLock();
           resolve(this);
         },
         quit: (exitCode) => {
@@ -108,6 +95,56 @@ class DoomEngine {
     if (this.isReady && this.Module && this.Module._SendPause) {
       this.Module._SendPause(0);
       this.isPaused = false;
+    }
+  }
+
+  /**
+   * Set up pointer lock on the DOOM canvas.
+   * PrBoom's SDL2 Emscripten layer uses e.movementX/Y for mouse look,
+   * which only works correctly when pointer lock is active.
+   * Without pointer lock the mouse is bounded by the viewport edge —
+   * the player cannot turn more than one screen-width before running out of space.
+   */
+  _setupPointerLock() {
+    const canvas = this.canvas;
+
+    // Click the canvas → acquire pointer lock (required for infinite mouse deltas)
+    canvas.addEventListener('click', () => {
+      if (document.pointerLockElement !== canvas) {
+        canvas.requestPointerLock();
+      }
+    });
+
+    // Track lock state so main.js can show/hide the "click to play" hint
+    document.addEventListener('pointerlockchange', () => {
+      this.isPointerLocked = document.pointerLockElement === canvas;
+      canvas.dispatchEvent(new CustomEvent('doom:pointerlockchange', {
+        bubbles: true,
+        detail: { locked: this.isPointerLocked }
+      }));
+    });
+
+    // Some browsers emit pointerlockerror — log it so we can debug
+    document.addEventListener('pointerlockerror', () => {
+      console.warn('[DoomEngine] Pointer lock request denied by browser');
+    });
+  }
+
+  /**
+   * Release pointer lock (call before opening admin/menus).
+   */
+  exitPointerLock() {
+    if (document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }
+
+  /**
+   * Request pointer lock (call to re-enter game from admin).
+   */
+  requestPointerLock() {
+    if (this.canvas && document.pointerLockElement !== this.canvas) {
+      this.canvas.requestPointerLock();
     }
   }
 

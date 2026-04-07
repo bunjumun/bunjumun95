@@ -17,27 +17,6 @@
     if (res.ok) gallery = await res.json();
   } catch (_) { /* offline / first run */ }
 
-  // ── 0b. Background audio (external, no repo bloat) ────────────────────────
-  let bgAudio = null;
-  function applyAudioConfig(cfg) {
-    if (bgAudio) { bgAudio.pause(); bgAudio = null; }
-    if (!cfg?.url) return;
-    bgAudio = new Audio(cfg.url);
-    bgAudio.volume = (cfg.volume ?? 60) / 100;
-    bgAudio.loop   = cfg.loop !== false;
-    // Browsers require user gesture before autoplay — play on first interaction
-    const startOnGesture = () => {
-      bgAudio?.play().catch(() => {});
-      window.removeEventListener('click', startOnGesture);
-      window.removeEventListener('keydown', startOnGesture);
-    };
-    window.addEventListener('click', startOnGesture);
-    window.addEventListener('keydown', startOnGesture);
-  }
-  applyAudioConfig(gallery.audio);
-  // Admin can update audio live without page reload
-  window.addEventListener('gallery:audio-updated', (e) => applyAudioConfig(e.detail));
-
   const exhibitCount = gallery.exhibits.length || 0;
 
   // ── 1. Generate gallery.wad from exhibits ────────────────────────────────────
@@ -111,29 +90,50 @@
   // ── 7. HUD / interaction wiring ──────────────────────────────────────────────
   progress(90);
   const settingsBtn = document.getElementById('settings-btn');
+  const lockOverlay = document.getElementById('lock-overlay');
+
+  // Pointer lock state → show/hide "click to play" overlay
+  const canvas = doomEngine.getCanvas();
+  if (canvas) {
+    canvas.addEventListener('doom:pointerlockchange', (e) => {
+      if (lockOverlay) {
+        lockOverlay.style.display = e.detail.locked ? 'none' : 'flex';
+      }
+    });
+  }
+
+  // Click lock overlay to acquire pointer lock
+  if (lockOverlay) {
+    lockOverlay.addEventListener('click', () => {
+      doomEngine.requestPointerLock();
+    });
+  }
 
   if (settingsBtn) {
     settingsBtn.addEventListener('click', () => {
       if (!portal.isOpen) {
+        doomEngine.exitPointerLock(); // release mouse before opening menu
         doomEngine.pause();
         admin.toggle();
       }
     });
   }
 
-  // Escape key closes admin
+  // Escape key closes admin, then show "click to re-enter" overlay
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Escape' && admin.isOpen) {
       admin.close();
       doomEngine.resume();
+      // Pointer lock must be re-acquired by clicking the canvas
+      if (lockOverlay) lockOverlay.style.display = 'flex';
     }
   });
 
   // ── 8. Hide loading UI ───────────────────────────────────────────────────────
   progress(100);
 
-  const lockOverlay = document.getElementById('lock-overlay');
-  if (lockOverlay) lockOverlay.style.display = 'none';
+  // Lock overlay stays visible — user must click it to acquire pointer lock and start playing
+  // (was previously hidden here; now managed by pointerlockchange event above)
 
   const loading = document.getElementById('loading');
   if (loading) {
