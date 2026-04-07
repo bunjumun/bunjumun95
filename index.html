@@ -3,28 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BUNJUMUN-MAZE-95</title>
+  <title>BUNJUMUN-DOOM</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <!-- Loading screen -->
   <div id="loading">
-    <div class="loading-text">LOADING BUNJUMUN-MAZE-95...</div>
+    <div class="loading-text">LOADING BUNJUMUN-DOOM...</div>
     <div class="loading-bar-wrap"><div class="loading-bar" id="loading-bar"></div></div>
   </div>
 
-  <!-- Pointer-lock click-to-start overlay -->
+  <!-- Pointer-lock overlay (repurposed for DOOM) -->
   <div id="lock-overlay">
-    <div class="title">BUNJUMUN-MAZE-95</div>
-    <div class="sub">CLICK TO ENTER</div>
-    <div class="hint">WASD / ARROWS · MOUSE LOOK · E TO INTERACT · TAB MAP · ⚙ SETTINGS</div>
+    <div class="title">BUNJUMUN-DOOM</div>
+    <div class="sub">GALLERY SHOOTER</div>
+    <div class="hint">MOUSE LOOK · LEFT CLICK TO SHOOT · ⚙ SETTINGS</div>
   </div>
 
-  <!-- Game container: both canvases coexist; z-index/opacity controls visibility -->
+  <!-- DOOM container (canvas appended by DoomEngine) -->
   <div id="game-container">
-    <canvas id="maze-canvas" class="canvas-layer canvas-active"></canvas>
-    <div id="doom-container" class="canvas-layer canvas-hidden"></div>
+    <div id="doom-container" class="canvas-layer canvas-active"></div>
   </div>
 
   <!-- HUD -->
@@ -32,25 +31,12 @@
     <div id="crosshair">+</div>
     <button id="settings-btn" title="Settings / Admin">⚙</button>
   </div>
-  <div id="interact-hint" hidden>[ E ] &nbsp; VIEW EXHIBIT</div>
-  <div id="controls-hint">WASD / ARROWS &nbsp;·&nbsp; MOUSE LOOK &nbsp;·&nbsp; E INTERACT &nbsp;·&nbsp; TAB MAP &nbsp;·&nbsp; ⚙ SETTINGS</div>
+  <div id="controls-hint" style="display:none;">MOUSE LOOK · CLICK TO SHOOT · ⚙ SETTINGS</div>
 
-  <!-- Exhibit discovery guide overlay -->
-  <div id="exhibit-guide" class="guide-overlay hidden">
-    <header style="font-weight: bold; margin-bottom: 8px;">EXHIBIT DISCOVERY</header>
-    <p class="guide-count" style="margin: 6px 0; font-size: 12px;">0 exhibits · 0 frames</p>
-    <p class="guide-next" style="margin: 6px 0; font-size: 11px;">Next up: <strong id="guide-next-title">—</strong></p>
-    <button id="guide-highlight" class="guide-button">HIGHLIGHT PATH</button>
-  </div>
-
-  <!-- Minimap canvas -->
-  <canvas id="minimap" width="200" height="200"></canvas>
-
-  <!-- DOOM Win95 HUD (visible in doom mode only) -->
-  <div id="doom-hud" class="win95-window canvas-hidden">
+  <!-- DOOM Win95 HUD -->
+  <div id="doom-hud" class="win95-window">
     <div class="win95-titlebar">
       <span>DOOM.EXE — BUNJUMUN GALLERY</span>
-      <button id="doom-exit-btn" title="Return to Maze">✕</button>
     </div>
     <div class="doom-status-panel">
       <span class="doom-status-box">Exhibits: <strong id="doom-score">0 / 0</strong></span>
@@ -62,22 +48,18 @@
   <div id="exhibit-host"></div>
   <div id="admin-host"></div>
 
-  <!-- Three.js r128 (UMD — gives global THREE) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- DOOM Game Systems (load order matters) -->
+  <script src="js/doom-engine.js"></script>
+  <script src="js/doom-bridge.js"></script>
+  <script src="js/gallery-wad.js"></script>
+  <script src="js/explosion.js"></script>
 
-  <!-- Game modules (load order matters) -->
-  <script src="js/maze-gen.js"></script>
-  <script src="js/curator.js"></script>
-  <script src="js/engine.js"></script>
-  <script src="js/controls.js"></script>
+  <!-- Gallery Management & UI -->
   <script src="js/exhibit.js"></script>
   <script src="js/github-api.js"></script>
   <script src="js/admin.js"></script>
-  <script src="js/audio-manager.js"></script>
-  <script src="js/game-mode-manager.js"></script>
-  <script src="js/input-router.js"></script>
-  <script src="js/doom-loader.js"></script>
-  <script src="js/doom-raycaster.js"></script>
+
+  <!-- Bootstrap -->
   <script src="js/main.js"></script>
 
 </body>

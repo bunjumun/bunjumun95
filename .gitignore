@@ -1,4 +1,14 @@
-.DS_Store
-*.log
+# DOOM binary assets (too large for git, obtained via releases)
+doom/doom.js
+doom/doom.wasm
+doom/doom1.wad
+
+# Build artifacts
 node_modules/
-.env
+dist/
+build/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
