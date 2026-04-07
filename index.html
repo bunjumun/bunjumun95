@@ -32,6 +32,14 @@
   <div id="interact-hint" hidden>[ E ] &nbsp; VIEW EXHIBIT</div>
   <div id="controls-hint">WASD / ARROWS &nbsp;·&nbsp; MOUSE LOOK &nbsp;·&nbsp; E INTERACT &nbsp;·&nbsp; TAB MAP &nbsp;·&nbsp; ⚙ SETTINGS</div>
 
+  <!-- Exhibit discovery guide overlay -->
+  <div id="exhibit-guide" class="guide-overlay hidden">
+    <header style="font-weight: bold; margin-bottom: 8px;">EXHIBIT DISCOVERY</header>
+    <p class="guide-count" style="margin: 6px 0; font-size: 12px;">0 exhibits · 0 frames</p>
+    <p class="guide-next" style="margin: 6px 0; font-size: 11px;">Next up: <strong id="guide-next-title">—</strong></p>
+    <button id="guide-highlight" class="guide-button">HIGHLIGHT PATH</button>
+  </div>
+
   <!-- Minimap canvas -->
   <canvas id="minimap" width="200" height="200"></canvas>
 

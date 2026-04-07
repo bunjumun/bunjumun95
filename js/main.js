@@ -87,6 +87,32 @@
     if (interactHint) interactHint.hidden = !engine.nearbyExhibit;
   };
 
+  // ── 9.5. Exhibit Discovery Guide ──────────────────────────────────────────────
+  const guideOverlay = document.getElementById('exhibit-guide');
+  const highlightBtn = document.getElementById('guide-highlight');
+  const guideNextTitle = document.getElementById('guide-next-title');
+  let guideVisited = localStorage.getItem('bunjumun_guide_seen');
+
+  function showGuideOverlay() {
+    if (!guideOverlay || guideVisited) return;
+    guideOverlay.querySelector('.guide-count').textContent = `${exhibitCount} exhibits · ${exhibitCount} frames`;
+    if (engine.nearbyExhibit) {
+      guideNextTitle.textContent = engine.nearbyExhibit.title || 'Unknown Exhibit';
+    }
+    guideOverlay.classList.remove('hidden');
+    localStorage.setItem('bunjumun_guide_seen', 'true');
+    guideVisited = true;
+    setTimeout(() => guideOverlay.classList.add('hidden'), 10000);
+  }
+
+  highlightBtn?.addEventListener('click', () => {
+    guideOverlay?.classList.add('hidden');
+    console.log('Highlight path clicked for nearest exhibit');
+  });
+
+  // Show guide on first load
+  setTimeout(showGuideOverlay, 2000);
+
   // ── 10. Pointer-lock overlay ─────────────────────────────────────────────────
   const lockOverlay = document.getElementById('lock-overlay');
 
