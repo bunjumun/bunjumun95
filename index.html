@@ -21,8 +21,11 @@
     <div class="hint">WASD / ARROWS · MOUSE LOOK · E TO INTERACT · TAB MAP · ⚙ SETTINGS</div>
   </div>
 
-  <!-- Main render canvas -->
-  <canvas id="maze-canvas"></canvas>
+  <!-- Game container: both canvases coexist; z-index/opacity controls visibility -->
+  <div id="game-container">
+    <canvas id="maze-canvas" class="canvas-layer canvas-active"></canvas>
+    <div id="doom-container" class="canvas-layer canvas-hidden"></div>
+  </div>
 
   <!-- HUD -->
   <div id="hud">
@@ -43,6 +46,18 @@
   <!-- Minimap canvas -->
   <canvas id="minimap" width="200" height="200"></canvas>
 
+  <!-- DOOM Win95 HUD (visible in doom mode only) -->
+  <div id="doom-hud" class="win95-window canvas-hidden">
+    <div class="win95-titlebar">
+      <span>DOOM.EXE — BUNJUMUN GALLERY</span>
+      <button id="doom-exit-btn" title="Return to Maze">✕</button>
+    </div>
+    <div class="doom-status-panel">
+      <span class="doom-status-box">Exhibits: <strong id="doom-score">0 / 0</strong></span>
+      <span class="doom-status-box" id="doom-status-text">Ready</span>
+    </div>
+  </div>
+
   <!-- Shadow DOM hosts (portals injected here) -->
   <div id="exhibit-host"></div>
   <div id="admin-host"></div>
@@ -58,6 +73,11 @@
   <script src="js/exhibit.js"></script>
   <script src="js/github-api.js"></script>
   <script src="js/admin.js"></script>
+  <script src="js/audio-manager.js"></script>
+  <script src="js/game-mode-manager.js"></script>
+  <script src="js/input-router.js"></script>
+  <script src="js/doom-loader.js"></script>
+  <script src="js/doom-raycaster.js"></script>
   <script src="js/main.js"></script>
 
 </body>

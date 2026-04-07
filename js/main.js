@@ -1,6 +1,6 @@
 // ── main.js ───────────────────────────────────────────────────────────────────
-// Bootstrap: load gallery → calculate maze size → generate maze → build scene
-// → place frames (1 per exhibit) → wire controls/UI.
+// Bootstrap: mode selector → load gallery → maze size → generate maze →
+// build scene → place frames → wire controls/UI/DOOM systems.
 // ─────────────────────────────────────────────────────────────────────────────
 
 (async function BUNJUMUN_MAZE_95() {
@@ -8,6 +8,9 @@
   // ── Progress helper ─────────────────────────────────────────────────────────
   const bar = document.getElementById('loading-bar');
   function progress(pct) { if (bar) bar.style.width = pct + '%'; }
+
+  // ── 0. Mode Selector ────────────────────────────────────────────────────────
+  const selectedMode = await showModeSelector();
 
   // ── 1. Load gallery & calculate dynamic maze size ──────────────────────────
   progress(10);
@@ -51,6 +54,45 @@
   progress(88);
   const portal = new ExhibitPortal(document.getElementById('exhibit-host'), engine);
   const admin  = new AdminConsole(document.getElementById('admin-host'), engine, portal);
+
+  // ── 7.5. DOOM systems (lazy — only wired, not loaded yet) ───────────────────
+  const audioMgr   = new AudioManager();
+  const modeMgr    = new GameModeManager(engine, audioMgr);
+  const doomLoader = new DoomLoader(document.getElementById('doom-container'), audioMgr);
+  const doomRay    = new DoomRaycaster(engine, portal, modeMgr);
+  const inputRouter = new InputRouter(modeMgr);
+
+  const mazeCanvas = document.getElementById('maze-canvas');
+  const doomContainer = document.getElementById('doom-container');
+  modeMgr.init(mazeCanvas, doomContainer, doomLoader);
+  inputRouter.attach(controls, doomRay);
+
+  // DOOM exit button → return to maze
+  document.getElementById('doom-exit-btn')?.addEventListener('click', () => {
+    modeMgr.switchToMaze();
+    document.getElementById('doom-hud').classList.add('canvas-hidden');
+  });
+
+  // Update DOOM score counter when exhibits are opened
+  const totalExhibits = gallery.exhibits.length;
+  let viewedCount = 0;
+  const origOpen = portal.open.bind(portal);
+  portal.open = (exhibit) => {
+    origOpen(exhibit);
+    if (modeMgr.getCurrentMode() === 'doom') {
+      viewedCount++;
+      const scoreEl = document.getElementById('doom-score');
+      if (scoreEl) scoreEl.textContent = `${viewedCount} / ${totalExhibits}`;
+    }
+  };
+
+  // DOOM mode entry — triggered by mode selector or settings
+  if (selectedMode === 'doom') {
+    setTimeout(() => {
+      modeMgr.switchToDoom();
+      document.getElementById('doom-hud').classList.remove('canvas-hidden');
+    }, 500);
+  }
 
   // ── 8. HUD / interaction wiring ─────────────────────────────────────────────
   progress(94);
@@ -141,8 +183,62 @@
   console.log(
     `%cBUNJUMUN-MAZE-95 loaded.\n` +
     `Maze: ${ROOMS}×${ROOMS} rooms | ${GW}×${GH} grid\n` +
-    `Frame slots available: ${slots.length} | Exhibits: ${exhibitCount}`,
+    `Frame slots available: ${slots.length} | Exhibits: ${exhibitCount}\n` +
+    `Mode: ${selectedMode.toUpperCase()}`,
     'color: #00FF00; font-family: monospace;'
   );
 
 })();
+
+// ── Mode Selector ─────────────────────────────────────────────────────────────
+// Returns promise resolving to 'maze' or 'doom'.
+// Skips selector if localStorage preference is set.
+
+function showModeSelector() {
+  return new Promise(resolve => {
+    const saved = localStorage.getItem('bunjumun_mode');
+    if (saved === 'maze' || saved === 'doom') {
+      resolve(saved);
+      return;
+    }
+
+    // Build selector overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'mode-selector';
+    overlay.innerHTML = `
+      <div class="mode-window">
+        <div class="mode-titlebar">⚙ BUNJUMUN-MAZE-95 — SELECT MODE</div>
+        <div class="mode-body">
+          <div class="mode-title">BUNJUMUN-MAZE-95</div>
+          <div class="mode-subtitle">Choose your experience. Gallery content is the same in both modes.</div>
+          <div class="mode-buttons">
+            <button class="mode-btn" id="btn-maze">
+              <span class="mode-icon">🏛</span>
+              MAZE MODE
+              <span class="mode-label">Navigate Win95 corridors · E to interact</span>
+            </button>
+            <button class="mode-btn" id="btn-doom">
+              <span class="mode-icon">💀</span>
+              DOOM MODE
+              <span class="mode-label">Shoot the paintings to open exhibits</span>
+            </button>
+          </div>
+          <label class="mode-remember">
+            <input type="checkbox" id="mode-remember"> Remember my choice
+          </label>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    function pick(mode) {
+      const remember = document.getElementById('mode-remember')?.checked;
+      if (remember) localStorage.setItem('bunjumun_mode', mode);
+      overlay.classList.add('hidden');
+      resolve(mode);
+    }
+
+    document.getElementById('btn-maze').addEventListener('click', () => pick('maze'));
+    document.getElementById('btn-doom').addEventListener('click', () => pick('doom'));
+  });
+}
