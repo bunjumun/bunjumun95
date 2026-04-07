@@ -1,0 +1,166 @@
+/* ── BUNJUMUN-MAZE-95 ── Global Styles ─────────────────────────────── */
+
+:root {
+  --primary-brand:   #000080;   /* Win95 navy */
+  --accent:          #C0C0C0;   /* Win95 silver */
+  --warn:            #FF0000;
+  --text-light:      #FFFFFF;
+  --text-dark:       #000000;
+  --border-light:    #FFFFFF;
+  --border-dark:     #808080;
+  --win95-bg:        #C0C0C0;
+  --fog-color:       #000000;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--fog-color);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* ── Canvas ──────────────────────────────────────────────────────────── */
+#maze-canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  cursor: crosshair;
+}
+
+/* ── Loading Screen ──────────────────────────────────────────────────── */
+#loading {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  color: #C0C0C0;
+}
+
+.loading-text {
+  font-size: 14px;
+  letter-spacing: 3px;
+  animation: blink 1s step-end infinite;
+}
+
+.loading-bar-wrap {
+  margin-top: 20px;
+  width: 300px;
+  height: 16px;
+  border: 2px inset #808080;
+  background: #000;
+}
+
+.loading-bar {
+  height: 100%;
+  background: #000080;
+  width: 0%;
+  transition: width 0.3s;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ── HUD ─────────────────────────────────────────────────────────────── */
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+#crosshair {
+  color: rgba(255,255,255,0.6);
+  font-size: 20px;
+  line-height: 1;
+  text-shadow: 0 0 4px #000;
+  user-select: none;
+}
+
+#interact-hint {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.75);
+  color: #C0C0C0;
+  padding: 4px 12px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  border: 1px solid #808080;
+}
+
+/* ── Controls Hint ────────────────────────────────────────────────────── */
+#controls-hint {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(192,192,192,0.45);
+  font-size: 10px;
+  letter-spacing: 1px;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* ── Minimap ──────────────────────────────────────────────────────────── */
+#minimap {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  border: 2px solid #808080;
+  image-rendering: pixelated;
+  display: none;
+  z-index: 200;
+}
+
+/* ── Pointer lock overlay ─────────────────────────────────────────────── */
+#lock-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  color: #C0C0C0;
+  gap: 16px;
+  cursor: pointer;
+}
+
+#lock-overlay .title {
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: #fff;
+}
+
+#lock-overlay .sub {
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.7;
+}
+
+#lock-overlay .hint {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+#lock-overlay.hidden {
+  display: none;
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BUNJUMUN-MAZE-95</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Loading screen -->
+  <div id="loading">
+    <div class="loading-text">LOADING BUNJUMUN-MAZE-95...</div>
+    <div class="loading-bar-wrap"><div class="loading-bar" id="loading-bar"></div></div>
+  </div>
+
+  <!-- Pointer-lock click-to-start overlay -->
+  <div id="lock-overlay">
+    <div class="title">BUNJUMUN-MAZE-95</div>
+    <div class="sub">CLICK TO ENTER</div>
+    <div class="hint">WASD / ARROWS · MOUSE LOOK · E TO INTERACT · TAB MAP · A ADMIN</div>
+  </div>
+
+  <!-- Main render canvas -->
+  <canvas id="maze-canvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="crosshair">+</div>
+  </div>
+  <div id="interact-hint" hidden>[ E ] &nbsp; VIEW EXHIBIT</div>
+  <div id="controls-hint">WASD / ARROWS &nbsp;·&nbsp; MOUSE LOOK &nbsp;·&nbsp; E INTERACT &nbsp;·&nbsp; TAB MAP &nbsp;·&nbsp; A ADMIN</div>
+
+  <!-- Minimap canvas -->
+  <canvas id="minimap" width="200" height="200"></canvas>
+
+  <!-- Shadow DOM hosts (portals injected here) -->
+  <div id="exhibit-host"></div>
+  <div id="admin-host"></div>
+
+  <!-- Three.js r128 (UMD — gives global THREE) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Game modules (load order matters) -->
+  <script src="js/maze-gen.js"></script>
+  <script src="js/curator.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/controls.js"></script>
+  <script src="js/exhibit.js"></script>
+  <script src="js/github-api.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>
