@@ -166,9 +166,7 @@ input[type="text"], input[type="password"], textarea {
 }
 
 #doomCanvas {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
+  display: block;
 }
 
 #doom-container iframe {
