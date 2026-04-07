@@ -55,6 +55,11 @@ class DoomEngine {
         onRuntimeInitialized: () => {
           console.log('[DoomEngine] PrBoom runtime initialized');
           this.isReady = true;
+          // Emscripten resets canvas styles after init — re-apply with delays
+          this._fitCanvas();
+          setTimeout(() => this._fitCanvas(), 100);
+          setTimeout(() => this._fitCanvas(), 500);
+          window.addEventListener('resize', () => this._fitCanvas());
           resolve(this);
         },
         quit: (exitCode) => {
@@ -89,6 +94,23 @@ class DoomEngine {
       this.Module._SendPause(0);
       this.isPaused = false;
     }
+  }
+
+  /**
+   * Scale canvas to fill container, preserving 4:3 aspect ratio.
+   */
+  _fitCanvas() {
+    if (!this.canvas || !this.containerEl) return;
+    const cw = this.containerEl.clientWidth;
+    const ch = this.containerEl.clientHeight;
+    const aspect = 4 / 3;
+    let w = cw, h = cw / aspect;
+    if (h > ch) { h = ch; w = ch * aspect; }
+    this.canvas.style.width = w + 'px';
+    this.canvas.style.height = h + 'px';
+    this.canvas.style.position = 'absolute';
+    this.canvas.style.left = ((cw - w) / 2) + 'px';
+    this.canvas.style.top = ((ch - h) / 2) + 'px';
   }
 
   /**

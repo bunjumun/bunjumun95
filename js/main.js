@@ -42,8 +42,8 @@
 
   // ── 5. Exhibit portal & Admin console ─────────────────────────────────────
   progress(70);
-  const portal = new ExhibitPortal(document.getElementById('exhibit-host'), null);
-  const admin  = new AdminConsole(document.getElementById('admin-host'), null, portal);
+  const portal = new ExhibitPortal(document.getElementById('exhibit-host'), doomEngine);
+  const admin  = new AdminConsole(document.getElementById('admin-host'), doomEngine, portal);
 
   // Override portal pause/resume to use DOOM engine
   const origPortalOpen = portal.open.bind(portal);
