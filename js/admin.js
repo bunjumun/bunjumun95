@@ -687,8 +687,6 @@ class AdminConsole {
     this.isOpen = false;
     this.host.style.display = 'none';
     this.engine.resume();
-    setTimeout(() => {
-      document.getElementById('maze-canvas')?.requestPointerLock();
-    }, 100);
+    // DOOM re-acquires pointer lock on its own via canvas click — no action needed here.
   }
 }

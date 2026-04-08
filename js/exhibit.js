@@ -210,10 +210,7 @@ class ExhibitPortal {
 
     this.engine.resume();
 
-    // Re-acquire pointer lock after a brief delay (browser requires user gesture)
-    setTimeout(() => {
-      document.getElementById('maze-canvas')?.requestPointerLock();
-    }, 100);
+    // DOOM re-acquires pointer lock on its own via canvas click — no action needed here.
   }
 
   // ── Content Rendering ────────────────────────────────────────────────────────
