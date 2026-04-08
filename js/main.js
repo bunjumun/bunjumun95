@@ -93,11 +93,13 @@
   const lockOverlay = document.getElementById('lock-overlay');
 
   // Pointer lock state → show/hide "click to play" overlay
+  // Only show overlay if neither admin nor exhibit portal is open
   const canvas = doomEngine.getCanvas();
   if (canvas) {
     canvas.addEventListener('doom:pointerlockchange', (e) => {
       if (lockOverlay) {
-        lockOverlay.style.display = e.detail.locked ? 'none' : 'flex';
+        const menuOpen = admin.isOpen || portal.isOpen;
+        lockOverlay.style.display = e.detail.locked ? 'none' : (menuOpen ? 'none' : 'flex');
       }
     });
   }
