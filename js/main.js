@@ -18,6 +18,11 @@
   } catch (_) { /* offline / first run */ }
 
   const exhibitCount = gallery.exhibits.length || 0;
+  const frameCount = 14;
+  const visitedExhibits = new Set();
+  let statusResetTimer = null;
+  let directionHintTimer = null;
+  let pointerLocked = false;
 
   // ── 1. Generate gallery.wad from exhibits ────────────────────────────────────
   progress(25);
@@ -45,6 +50,101 @@
   const portal = new ExhibitPortal(document.getElementById('exhibit-host'), doomEngine);
   const admin  = new AdminConsole(document.getElementById('admin-host'), doomEngine, portal);
 
+  // ── 5a. UI state helpers ────────────────────────────────────────────────────
+  const lockOverlay = document.getElementById('lock-overlay');
+  const guideOverlay = document.getElementById('exhibit-guide');
+  const guideCountEl = guideOverlay?.querySelector('.guide-count');
+  const guideNextEl = guideOverlay?.querySelector('.guide-next strong');
+  const guideHighlightBtn = document.getElementById('guide-highlight');
+  const doomStatusText = document.getElementById('doom-status-text');
+
+  let directionHint = document.getElementById('guide-direction-hint');
+  if (!directionHint) {
+    directionHint = document.createElement('div');
+    directionHint.id = 'guide-direction-hint';
+    directionHint.className = 'guide-direction-hint hidden';
+    directionHint.textContent = '▶ AHEAD';
+    document.body.appendChild(directionHint);
+  }
+
+  const getNextExhibit = () => (
+    gallery.exhibits.find((exhibit, index) => {
+      const exhibitKey = exhibit.id || `exhibit-${index}`;
+      return !visitedExhibits.has(exhibitKey);
+    })
+  );
+
+  const updateLockOverlay = (forceDisplay = null) => {
+    if (!lockOverlay) return;
+
+    if (forceDisplay) {
+      lockOverlay.style.display = forceDisplay;
+      return;
+    }
+
+    const menuOpen = admin.isOpen || portal.isOpen;
+    lockOverlay.style.display = pointerLocked || menuOpen ? 'none' : 'flex';
+  };
+
+  const updateGuide = () => {
+    if (guideCountEl) {
+      guideCountEl.textContent = `${exhibitCount} exhibits · ${frameCount} frames`;
+    }
+
+    if (guideNextEl) {
+      const nextExhibit = getNextExhibit();
+      guideNextEl.textContent = nextExhibit ? nextExhibit.title : 'All exhibits cleared';
+    }
+  };
+
+  const updateGuideVisibility = () => {
+    if (!guideOverlay) return;
+    guideOverlay.classList.toggle('hidden', admin.isOpen || portal.isOpen);
+  };
+
+  const setStatusText = (text, durationMs = 0) => {
+    if (!doomStatusText) return;
+
+    if (statusResetTimer) {
+      clearTimeout(statusResetTimer);
+      statusResetTimer = null;
+    }
+
+    doomStatusText.textContent = text;
+
+    if (!durationMs) return;
+
+    statusResetTimer = setTimeout(() => {
+      doomStatusText.textContent = visitedExhibits.size === exhibitCount && exhibitCount > 0
+        ? 'Gallery complete ★'
+        : 'Ready';
+      statusResetTimer = null;
+    }, durationMs);
+  };
+
+  const flashDirectionHint = () => {
+    if (!directionHint) return;
+
+    if (directionHintTimer) clearTimeout(directionHintTimer);
+
+    directionHint.classList.remove('hidden');
+    directionHint.classList.add('active');
+
+    directionHintTimer = setTimeout(() => {
+      directionHint.classList.remove('active');
+      directionHint.classList.add('hidden');
+      directionHintTimer = null;
+    }, 2000);
+  };
+
+  updateGuide();
+  updateGuideVisibility();
+  setStatusText('Ready');
+
+  if (guideHighlightBtn) {
+    guideHighlightBtn.addEventListener('click', flashDirectionHint);
+  }
+
   // Override portal pause/resume to use DOOM engine
   const origPortalOpen = portal.open.bind(portal);
   const origPortalClose = portal.close.bind(portal);
@@ -53,12 +153,32 @@
     doomEngine.pause();
     doomBridge.stop();
     origPortalOpen(exhibit);
+    updateLockOverlay('none');
+    updateGuideVisibility();
   };
 
   portal.close = () => {
     origPortalClose();
     doomBridge.start();
     doomEngine.resume();
+    updateLockOverlay('flex');
+    updateGuideVisibility();
+  };
+
+  // Harden admin overlay state transitions without touching admin.js
+  const origAdminOpen = admin.open.bind(admin);
+  const origAdminClose = admin.close.bind(admin);
+
+  admin.open = () => {
+    origAdminOpen();
+    updateLockOverlay('none');
+    updateGuideVisibility();
+  };
+
+  admin.close = () => {
+    origAdminClose();
+    updateLockOverlay('flex');
+    updateGuideVisibility();
   };
 
   // ── 6. Wire exhibit:shot event → explosion + portal ───────────────────────
@@ -74,6 +194,16 @@
 
     console.log('[Main] Exhibit shot:', exhibit.title);
 
+    const exhibitKey = exhibit.id || `exhibit-${exhibitIndex}`;
+    visitedExhibits.add(exhibitKey);
+    updateGuide();
+
+    if (visitedExhibits.size === exhibitCount && exhibitCount > 0) {
+      setStatusText('Gallery complete ★');
+    } else {
+      setStatusText('Exhibit viewed ✓', 3000);
+    }
+
     // Play explosion effect, open portal when done
     explosion.play(() => {
       portal.open(exhibit);
@@ -82,7 +212,7 @@
     // Update score
     const scoreEl = document.getElementById('doom-score');
     if (scoreEl) {
-      const current = parseInt(scoreEl.textContent.split('/')[0].trim()) || 0;
+      const current = parseInt(scoreEl.textContent.split('/')[0].trim(), 10) || 0;
       scoreEl.textContent = `${current + 1} / ${exhibitCount}`;
     }
   });
@@ -90,17 +220,13 @@
   // ── 7. HUD / interaction wiring ──────────────────────────────────────────────
   progress(90);
   const settingsBtn = document.getElementById('settings-btn');
-  const lockOverlay = document.getElementById('lock-overlay');
 
   // Pointer lock state → show/hide "click to play" overlay
-  // Only show overlay if neither admin nor exhibit portal is open
   const canvas = doomEngine.getCanvas();
   if (canvas) {
     canvas.addEventListener('doom:pointerlockchange', (e) => {
-      if (lockOverlay) {
-        const menuOpen = admin.isOpen || portal.isOpen;
-        lockOverlay.style.display = e.detail.locked ? 'none' : (menuOpen ? 'none' : 'flex');
-      }
+      pointerLocked = Boolean(e.detail.locked);
+      updateLockOverlay();
     });
   }
 
@@ -114,9 +240,16 @@
   if (settingsBtn) {
     settingsBtn.addEventListener('click', () => {
       if (!portal.isOpen) {
-        doomEngine.exitPointerLock(); // release mouse before opening menu
-        doomEngine.pause();
-        admin.toggle();
+        doomEngine.exitPointerLock();
+        pointerLocked = false;
+        updateLockOverlay('none');
+
+        if (admin.isOpen) {
+          admin.close();
+        } else {
+          doomEngine.pause();
+          admin.open();
+        }
       }
     });
   }
@@ -125,17 +258,12 @@
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Escape' && admin.isOpen) {
       admin.close();
-      doomEngine.resume();
-      // Pointer lock must be re-acquired by clicking the canvas
-      if (lockOverlay) lockOverlay.style.display = 'flex';
     }
   });
 
   // ── 8. Hide loading UI ───────────────────────────────────────────────────────
   progress(100);
-
-  // Lock overlay stays visible — user must click it to acquire pointer lock and start playing
-  // (was previously hidden here; now managed by pointerlockchange event above)
+  updateLockOverlay();
 
   const loading = document.getElementById('loading');
   if (loading) {

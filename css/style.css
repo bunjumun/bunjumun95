@@ -519,40 +519,53 @@ input[type="text"], input[type="password"], textarea {
 /* ── Exhibit Discovery Guide ──────────────────────────────────────────── */
 #exhibit-guide {
   position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.85);
-  border: 2px outset #ffffff;
-  box-shadow: 2px 2px 0 #808080;
+  right: 16px;
+  bottom: 72px;
+  padding: 2px;
+  background: var(--win95-bg);
+  box-shadow: var(--border-window);
   font-family: 'MS Sans Serif', 'Courier New', Courier, monospace;
-  color: #f7f7f7;
-  z-index: 1000;
-  width: 240px;
+  color: var(--text-dark);
+  z-index: 450;
+  width: min(200px, calc(100vw - 32px));
   font-size: 11px;
+  transition: opacity 0.2s ease;
 }
 
 #exhibit-guide header {
+  background: var(--primary-brand);
+  color: var(--text-light);
   font-weight: bold;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-  color: #ffff99;
+  letter-spacing: 0.5px;
+  padding: 3px 6px;
+}
+
+#exhibit-guide p {
+  margin: 0;
+}
+
+#exhibit-guide .guide-count,
+#exhibit-guide .guide-next {
+  margin: 6px;
+  padding: 4px 6px;
+  box-shadow: var(--border-inset);
+  background: #dcdcdc;
 }
 
 #exhibit-guide.hidden {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s;
 }
 
 .guide-button {
   display: block;
-  width: 100%;
-  margin-top: 0.75rem;
-  background: #00aaff;
-  border: 2px outset #0055aa;
-  padding: 0.35rem 0.85rem;
-  color: #fff;
+  width: calc(100% - 12px);
+  margin: 6px;
+  background: var(--win95-bg);
+  border: none;
+  box-shadow: var(--border-outset);
+  padding: 4px 6px;
+  color: var(--text-dark);
   font-family: inherit;
   font-size: 10px;
   font-weight: bold;
@@ -562,5 +575,31 @@ input[type="text"], input[type="password"], textarea {
 }
 
 .guide-button:active {
-  border-style: inset;
+  box-shadow: var(--border-inset);
+}
+
+.guide-direction-hint {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: #ffe066;
+  border: 2px solid #ffe066;
+  padding: 10px 18px;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  z-index: 1100;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.guide-direction-hint.active {
+  opacity: 1;
+}
+
+.guide-direction-hint.hidden {
+  opacity: 0;
 }
