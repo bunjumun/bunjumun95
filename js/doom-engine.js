@@ -34,6 +34,7 @@ class DoomEngine {
         TOTAL_MEMORY: 268435456, // 256 MB (WASM requires 4096 pages × 64KB)
         print: (text) => console.log('[PrBoom]', text),
         printErr: (text) => console.error('[PrBoom Error]', text),
+        arguments: ['-iwad', 'doom1.wad', '-file', '/doom/gallery.wad', '-warp', '1', '1'],
         locateFile: (path) => {
           if (path === 'doom1.wasm') return 'doom/doom.wasm';
           if (path === 'doom1.data') return 'doom/web/doom1.data';

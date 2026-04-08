@@ -96,20 +96,61 @@ def build_wad():
         (-896, 512, 0, 2001, 7), # Shotgun near start
     ]
 
-    # --- BSP Generation (Trivial single-node fallback) ---
+    # --- BSP Generation ---
+    # Create segs from linedefs (simple mapping)
     segs_data = b''
     for i, ld in enumerate(linedefs):
         v1, v2, flags, special, tag, s1, s2 = ld
+        # angle is binary angle. 0=east, 0x4000=north, 0x8000=west, 0xc000=south.
+        # For simplicity, we use 0.
         segs_data += struct.pack('<hhhhhh', v1, v2, 0, i, 0, 0)
 
+    # One subsector containing all segs
     ssectors_data = struct.pack('<hh', len(linedefs), 0)
 
+    # Trivial node split at Y=0
     nodes_data = struct.pack('<hhhh hhhh hhhh HH',
         -1024, 0, 2048, 0,          # partition line
         1024, -1024, -1024, 1024,   # right bbox
         1024, -1024, -1024, 1024,   # left bbox
-        0x8000, 0x8000              # both children → ssector 0
+        0x8000, 0x8000              # both children -> subsector 0
     )
+
+    # --- BLOCKMAP Generation ---
+    block_size = 128
+    origin_x = -1024
+    origin_y = -1024
+    cols = (1024 - origin_x) // block_size
+    rows = (1024 - origin_y) // block_size
+    
+    block_lists = []
+    for r in range(rows):
+        for c in range(cols):
+            bx1, by1 = origin_x + c * block_size, origin_y + r * block_size
+            bx2, by2 = bx1 + block_size, by1 + block_size
+            
+            linds = []
+            for i, ld in enumerate(linedefs):
+                v1_idx, v2_idx = ld[0], ld[1]
+                x1, y1 = vertices[v1_idx]
+                x2, y2 = vertices[v2_idx]
+                lx1, lx2 = min(x1, x2), max(x1, x2)
+                ly1, ly2 = min(y1, y2), max(y1, y2)
+                # Check if linedef bounding box intersects the block bounding box
+                if not (lx2 < bx1 or lx1 > bx2 or ly2 < by1 or ly1 > by2):
+                    linds.append(i)
+            block_lists.append(linds)
+
+    blockmap_header = struct.pack('<hhhh', origin_x, origin_y, cols, rows)
+    offsets = []
+    block_data = b''
+    current_offset = 4 + cols * rows
+    for linds in block_lists:
+        offsets.append(current_offset)
+        # List starts with 0 padding, ends with 0xFFFF
+        block_data += struct.pack('<H', 0) + b''.join(struct.pack('<H', i) for i in linds) + struct.pack('<H', 0xFFFF)
+        current_offset += 1 + len(linds) + 1
+    blockmap_lump = blockmap_header + struct.pack(f'<{len(offsets)}H', *offsets) + block_data
 
     # --- Binary Assembly ---
     def pack_lump(name, data):
@@ -126,7 +167,7 @@ def build_wad():
         pack_lump('NODES',    nodes_data),
         pack_lump('SECTORS',  b''.join(struct.pack('<hh8s8shhh', s[0], s[1], s[2].ljust(8, b'\0'), s[3].ljust(8, b'\0'), s[4], s[5], s[6]) for s in sectors)),
         pack_lump('REJECT',   b'\0' * ((len(sectors)**2 + 7) // 8)),
-        pack_lump('BLOCKMAP', b''),
+        pack_lump('BLOCKMAP', blockmap_lump),
     ]
 
     header_size = 12

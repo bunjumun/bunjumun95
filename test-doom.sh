@@ -153,7 +153,7 @@ test_file_sizes() {
     local checks=(
         "doom/doom.js:250:400"           # ~338KB
         "doom/doom.wasm:900:1200"        # ~1.0MB
-        "doom/web/doom1.data:80000:100000" # ~92MB Emscripten bundle
+        "doom/web/doom1.data:4000:5000"   # ~4.3MB audio-stripped bundle
         "doom/gallery.wad:1:2000"        # stub ok
     )
 

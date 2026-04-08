@@ -10,22 +10,22 @@
 [0;34m▶ PHASE 1: FILE VALIDATION[0m
 
 [0;34m▶ File Existence Validation[0m
-  [0;32m✅ doom/doom.js exists (340K)[0m
+  [0;32m✅ doom/doom.js exists (332K)[0m
   [0;32m✅ doom/doom.wasm exists (1.0M)[0m
-  [0;32m✅ doom/web/doom1.data exists ( 92M)[0m
-  [0;32m✅ doom/gallery.wad exists (4.0K)[0m
+  [0;32m✅ doom/web/doom1.data exists (4.3M)[0m
+  [0;32m✅ doom/gallery.wad exists (8.0K)[0m
   [0;32m✅ index.html exists (4.0K)[0m
   [0;32m✅ js/main.js exists (8.0K)[0m
-  [0;32m✅ js/doom-engine.js exists (4.0K)[0m
+  [0;32m✅ js/doom-engine.js exists (8.0K)[0m
   [0;32m✅ js/doom-bridge.js exists (4.0K)[0m
   [0;32m✅ js/gallery-wad.js exists (4.0K)[0m
   [0;32m✅ js/explosion.js exists (8.0K)[0m
 
 [0;34m▶ File Size Validation[0m
-  [0;32m✅ doom/doom.js: 340KB (expected 250-400KB)[0m
+  [0;32m✅ doom/doom.js: 332KB (expected 250-400KB)[0m
   [0;32m✅ doom/doom.wasm: 1032KB (expected 900-1200KB)[0m
-  [0;32m✅ doom/web/doom1.data: 94356KB (expected 80000-100000KB)[0m
-  [0;32m✅ doom/gallery.wad: 4KB (expected 1-2000KB)[0m
+  [0;32m✅ doom/web/doom1.data: 4376KB (expected 4000-5000KB)[0m
+  [0;32m✅ doom/gallery.wad: 8KB (expected 1-2000KB)[0m
 
 [0;34m▶ File Type Validation[0m
   [0;32m✅ doom/doom.js: Valid JavaScript (contains Emscripten markers)[0m
@@ -33,7 +33,7 @@
   [1;33m⚠️  doom/gallery.wad: Could not verify WAD header (stub may be ok)[0m
 
 [0;34m▶ DOOM WAD Structure Validation[0m
-  [0;32m✅ doom/gallery.wad: File present (12 bytes)[0m
+  [0;32m✅ doom/gallery.wad: File present (5581 bytes)[0m
 
 [0;34m═══════════════════════════════════════════════════════════════[0m
 
@@ -41,7 +41,7 @@
 
 [0;34m▶ Starting HTTP Server[0m
   Checking for existing servers on port 8000...
-  [0;32m✅ HTTP server started on port 8000 (PID: 22936)[0m
+  [0;32m✅ HTTP server started on port 8000 (PID: 20818)[0m
 
 [0;34m▶ HTTP Server Load Test[0m
   [0;32m✅ index.html loads successfully (HTTP 200)[0m
@@ -89,4 +89,4 @@ Tests Failed: [0;31m0[0m
 [0;32m╔════════════════════════════════════════════════════════════════╗[0m
 [0;32m║  ✅ ALL TESTS PASSED — Ready for GitHub Pages deployment      ║[0m
 [0;32m╚════════════════════════════════════════════════════════════════╝[0m
-  Stopping HTTP server (PID: 22936)...
+  Stopping HTTP server (PID: 20818)...
