@@ -426,7 +426,7 @@ input[type="text"], input[type="password"], textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 300;
+  z-index: 600;
 }
 
 #settings-btn:hover {
