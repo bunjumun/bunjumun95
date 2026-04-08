@@ -6,6 +6,9 @@
  * DOOM texture lumps (PNAMES, TEXTURE1, patch data) derived from gallery.json
  * exhibit thumbnails. The merged WAD is injected into PrBoom's Emscripten VFS
  * before engine boot, so exhibit walls render with actual gallery images.
+ *
+ * Textures are generated for ALL 14 zones (indices 0–13), using placeholder
+ * solid-color patches for exhibits without real thumbnails.
  */
 
 class GalleryWAD {
@@ -34,11 +37,12 @@ class GalleryWAD {
     if (!this.wadData) await this.generate();
 
     const exhibits = (this.gallery && this.gallery.exhibits) || [];
-    const withThumb = exhibits.filter(e => e.thumbnail && e.thumbnail.length > 0);
+    // Always generate textures for all 14 zones — placeholders fill missing thumbnails
+    const capped = exhibits.slice(0, 14);
 
-    if (withThumb.length > 0) {
+    if (capped.length > 0) {
       try {
-        const merged = await this._appendTextureLumps(this.wadData, withThumb);
+        const merged = await this._appendTextureLumps(this.wadData, capped);
         window.galleryWadData = merged;
         console.log('[GalleryWAD] Merged WAD with textures staged:', merged.byteLength, 'bytes');
       } catch (err) {
@@ -47,7 +51,7 @@ class GalleryWAD {
       }
     } else {
       window.galleryWadData = this.wadData;
-      console.log('[GalleryWAD] No thumbnails — geometry-only WAD staged:', this.wadData.byteLength, 'bytes');
+      console.log('[GalleryWAD] No exhibits — geometry-only WAD staged:', this.wadData.byteLength, 'bytes');
     }
   }
 
@@ -56,31 +60,40 @@ class GalleryWAD {
   /**
    * Generate PNAMES + TEXTURE1 + patch lumps from exhibits, then merge into
    * the base geometry WAD. Returns merged Uint8Array.
+   * Exhibits without thumbnails receive a colored placeholder patch.
    */
   async _appendTextureLumps(baseWad, exhibits) {
-    // Build one patch per exhibit, capped at 14 (matching WAD geometry)
     const capped = exhibits.slice(0, 14);
 
-    // Quantize images in parallel
+    // Build one patch per exhibit slot, preserving zone index mapping
     const patches = await Promise.all(capped.map(async (ex, i) => {
-      const name = `EX${String(i).padStart(2, '0')}PT`; // e.g. EX00PT … EX13PT (8 chars)
-      const texName = `EX${String(i).padStart(2, '0')}TX`; // e.g. EX00TX (8 chars)
-      const quantized = await this._quantizeImage(ex.thumbnail, 64, 128);
+      const name    = `EX${String(i).padStart(2, '0')}PT`; // e.g. EX00PT … EX13PT
+      const texName = `EX${String(i).padStart(2, '0')}TX`; // e.g. EX00TX … EX13TX
+      let quantized;
+      try {
+        if (ex.thumbnail && ex.thumbnail.length > 4) {
+          quantized = await this._quantizeImage(ex.thumbnail, 64, 128);
+        } else {
+          quantized = this._placeholderPatch(64, 128, i);
+        }
+      } catch (_) {
+        quantized = this._placeholderPatch(64, 128, i);
+      }
       const patchLump = this._encodePatch(quantized.pixels, quantized.w, quantized.h);
       return { patchName: name, texName, patchLump, w: quantized.w, h: quantized.h };
     }));
 
-    const patchNames = patches.map(p => p.patchName);
-    const pnamesLump  = this._buildPnames(patchNames);
+    const patchNames   = patches.map(p => p.patchName);
+    const pnamesLump   = this._buildPnames(patchNames);
     const texture1Lump = this._buildTexture1(patches);
 
     // Assemble extra lumps: P_START marker, patches, P_END marker, PNAMES, TEXTURE1
     const extraLumps = [
       { name: 'P_START', data: new Uint8Array(0) },
       ...patches.map(p => ({ name: p.patchName, data: p.patchLump })),
-      { name: 'P_END',   data: new Uint8Array(0) },
-      { name: 'PNAMES',  data: pnamesLump },
-      { name: 'TEXTURE1',data: texture1Lump },
+      { name: 'P_END',    data: new Uint8Array(0) },
+      { name: 'PNAMES',   data: pnamesLump },
+      { name: 'TEXTURE1', data: texture1Lump },
     ];
 
     return this._mergeWad(baseWad, extraLumps);
@@ -92,23 +105,22 @@ class GalleryWAD {
    * Append lumps to an existing PWAD without touching its existing entries.
    */
   _mergeWad(baseWad, extraLumps) {
-    const dv = new DataView(baseWad.buffer, baseWad.byteOffset);
-    const numBase  = dv.getUint32(4, true);
-    const dirOfs   = dv.getUint32(8, true);
+    const dv      = new DataView(baseWad.buffer, baseWad.byteOffset);
+    const numBase = dv.getUint32(4, true);
+    const dirOfs  = dv.getUint32(8, true);
 
     // Existing lump data block (everything before the directory)
     const dataBlock = baseWad.slice(0, dirOfs);
     const dirBlock  = baseWad.slice(dirOfs, dirOfs + numBase * 16);
 
     // New lump data appended after existing data block
-    const extraData  = extraLumps.map(l => l.data);
+    const extraData       = extraLumps.map(l => l.data);
     const extraTotalBytes = extraData.reduce((s, d) => s + d.byteLength, 0);
 
     // New directory entries for extra lumps
     const newDirEntries = new Uint8Array(extraLumps.length * 16);
     const ndv = new DataView(newDirEntries.buffer);
-    let curOfs = dirOfs; // extra lump data starts right where base dir was
-    // But base dir is now pushed back — recalculate:
+
     // Layout: [base lump data][extra lump data][base dir][extra dir]
     const newDirOfs = dirOfs + extraTotalBytes;
 
@@ -127,25 +139,26 @@ class GalleryWAD {
     // New header
     const header = new Uint8Array(12);
     const hdv = new DataView(header.buffer);
-    header[0]=80; header[1]=87; header[2]=65; header[3]=68; // PWAD
+    header[0] = 80; header[1] = 87; header[2] = 65; header[3] = 68; // PWAD
     hdv.setUint32(4, numBase + extraLumps.length, true);
     hdv.setUint32(8, newDirOfs, true);
 
     // Assemble: header + base lump data + extra lump data + base dir + extra dir
-    const total = 12 + (dataBlock.byteLength - 12) + extraTotalBytes + dirBlock.byteLength + newDirEntries.byteLength;
+    const total = 12 + (dataBlock.byteLength - 12) + extraTotalBytes +
+                  dirBlock.byteLength + newDirEntries.byteLength;
     const out = new Uint8Array(total);
     let pos = 0;
 
-    out.set(header, pos); pos += 12;
-    out.set(dataBlock.slice(12), pos); pos += dataBlock.byteLength - 12; // base lump data (skip old header)
+    out.set(header, pos);                   pos += 12;
+    out.set(dataBlock.slice(12), pos);       pos += dataBlock.byteLength - 12;
     for (const d of extraData) { out.set(d, pos); pos += d.byteLength; }
-    out.set(dirBlock, pos); pos += dirBlock.byteLength;
+    out.set(dirBlock, pos);                  pos += dirBlock.byteLength;
     out.set(newDirEntries, pos);
 
     return out;
   }
 
-  // ── Image quantization (T09) ─────────────────────────────────────────────────
+  // ── Image quantization ────────────────────────────────────────────────────────
 
   /**
    * Load base64 image, resize to (w × h), quantize to DOOM palette.
@@ -162,7 +175,7 @@ class GalleryWAD {
         ctx.drawImage(img, 0, 0, targetW, targetH);
         const rgba = ctx.getImageData(0, 0, targetW, targetH).data;
 
-        const pal = GalleryWAD._DOOM_PALETTE;
+        const pal     = GalleryWAD._DOOM_PALETTE;
         const indexed = new Uint8Array(targetW * targetH);
         for (let i = 0; i < indexed.length; i++) {
           indexed[i] = GalleryWAD._nearestPaletteColor(
@@ -172,9 +185,19 @@ class GalleryWAD {
         resolve({ pixels: indexed, w: targetW, h: targetH });
       };
       img.onerror = () => reject(new Error('Image load failed'));
-      // handle both data URLs and bare base64
       img.src = base64.startsWith('data:') ? base64 : `data:image/jpeg;base64,${base64}`;
     });
+  }
+
+  /**
+   * Generate a solid-color placeholder patch for exhibits without thumbnails.
+   * Each zone index gets a distinct DOOM palette color.
+   */
+  _placeholderPatch(w, h, index) {
+    // Distinct palette indices spread across DOOM's color ranges
+    const colors = [40, 80, 120, 160, 41, 81, 121, 161, 42, 82, 122, 162, 43, 83];
+    const color  = colors[index % colors.length];
+    return { pixels: new Uint8Array(w * h).fill(color), w, h };
   }
 
   static _nearestPaletteColor(r, g, b, pal) {
@@ -183,51 +206,42 @@ class GalleryWAD {
       const dr = r - pal[i * 3];
       const dg = g - pal[i * 3 + 1];
       const db = b - pal[i * 3 + 2];
-      // Perceptual weights (same as Llama's choice)
-      const d = 0.3 * dr * dr + 0.59 * dg * dg + 0.11 * db * db;
+      const d  = 0.3 * dr * dr + 0.59 * dg * dg + 0.11 * db * db;
       if (d < bestD) { bestD = d; best = i; }
     }
     return best;
   }
 
-  // ── DOOM picture/patch encoder (T10) ─────────────────────────────────────────
+  // ── DOOM picture/patch encoder ────────────────────────────────────────────────
 
   /**
    * Encode palette-indexed pixels to DOOM patch_t format.
-   * patch_t header: int16 width, height, leftoffset, topoffset
-   *                 uint32 columnofs[width]
-   * Each column: sequence of posts terminated by 0xFF
-   * Post: topdelta(1) + length(1) + pad(1) + pixels[length] + pad(1)
    */
   _encodePatch(pixels, w, h) {
-    // Build each column's byte sequence first so we know offsets
     const cols = [];
     for (let x = 0; x < w; x++) {
       const col = [];
-      // Single post spanning full height (h < 255 guaranteed by our 128px cap)
-      col.push(0);   // topdelta
-      col.push(h);   // length
-      col.push(0);   // pad1
+      col.push(0);    // topdelta
+      col.push(h);    // length
+      col.push(0);    // pad1
       for (let y = 0; y < h; y++) col.push(pixels[y * w + x]);
-      col.push(0);   // pad2
+      col.push(0);    // pad2
       col.push(0xFF); // column terminator
       cols.push(new Uint8Array(col));
     }
 
-    const headerBytes = 8 + w * 4; // patch_t header + columnofs array
+    const headerBytes = 8 + w * 4;
     let totalBytes = headerBytes;
     for (const c of cols) totalBytes += c.byteLength;
 
     const out = new Uint8Array(totalBytes);
     const dv  = new DataView(out.buffer);
 
-    // patch_t header
     dv.setInt16(0, w, true);
     dv.setInt16(2, h, true);
     dv.setInt16(4, 0, true); // leftoffset
     dv.setInt16(6, 0, true); // topoffset
 
-    // columnofs + column data
     let colPos = headerBytes;
     for (let x = 0; x < w; x++) {
       dv.setUint32(8 + x * 4, colPos, true);
@@ -253,17 +267,10 @@ class GalleryWAD {
 
   // ── TEXTURE1 lump ─────────────────────────────────────────────────────────────
 
-  /**
-   * patches: [{ patchName, texName, w, h }]
-   * Each texture uses one patch (1:1 mapping).
-   * maptexture_t: name(8) masked(4) width(2) height(2) coldir(4) patchcount(2) + patches
-   * mappatch_t:   originx(2) originy(2) patch(2) stepdir(2) colormap(2) = 10 bytes
-   */
   _buildTexture1(patches) {
-    const n = patches.length;
-    const ENTRY_SIZE = 22 + 10; // one patch ref per texture
+    const n          = patches.length;
+    const ENTRY_SIZE = 22 + 10; // maptexture_t + one mappatch_t
 
-    // Header: num_textures(4) + offsets[n](4 each)
     const headerBytes = 4 + n * 4;
     const totalBytes  = headerBytes + n * ENTRY_SIZE;
     const buf = new Uint8Array(totalBytes);
@@ -273,25 +280,25 @@ class GalleryWAD {
 
     for (let i = 0; i < n; i++) {
       const entryOfs = headerBytes + i * ENTRY_SIZE;
-      dv.setUint32(4 + i * 4, entryOfs, true); // offset from start of lump
+      dv.setUint32(4 + i * 4, entryOfs, true);
 
-      const p = patches[i];
+      const p  = patches[i];
       const tn = p.texName.toUpperCase().slice(0, 8);
       for (let c = 0; c < 8; c++) buf[entryOfs + c] = c < tn.length ? tn.charCodeAt(c) : 0;
 
-      dv.setInt32 (entryOfs + 8,  0,    true); // masked
-      dv.setInt16 (entryOfs + 12, p.w,  true); // width
-      dv.setInt16 (entryOfs + 14, p.h,  true); // height
-      dv.setInt32 (entryOfs + 16, 0,    true); // columndirectory (obsolete)
-      dv.setInt16 (entryOfs + 20, 1,    true); // patchcount
+      dv.setInt32 (entryOfs + 8,  0,   true); // masked
+      dv.setInt16 (entryOfs + 12, p.w, true); // width
+      dv.setInt16 (entryOfs + 14, p.h, true); // height
+      dv.setInt32 (entryOfs + 16, 0,   true); // columndirectory (obsolete)
+      dv.setInt16 (entryOfs + 20, 1,   true); // patchcount
 
       // mappatch_t
       const pp = entryOfs + 22;
-      dv.setInt16(pp,     0,    true); // originx
-      dv.setInt16(pp + 2, 0,    true); // originy
-      dv.setInt16(pp + 4, i,    true); // patch index into PNAMES
-      dv.setInt16(pp + 6, 1,    true); // stepdir
-      dv.setInt16(pp + 8, 0,    true); // colormap  ← int16, NOT int32
+      dv.setInt16(pp,     0, true); // originx
+      dv.setInt16(pp + 2, 0, true); // originy
+      dv.setInt16(pp + 4, i, true); // patch index into PNAMES
+      dv.setInt16(pp + 6, 1, true); // stepdir
+      dv.setInt16(pp + 8, 0, true); // colormap
     }
 
     return buf;
@@ -301,9 +308,9 @@ class GalleryWAD {
 
   _minimalStub() {
     const buf = new ArrayBuffer(12);
-    const v = new DataView(buf);
-    [80,87,65,68].forEach((b,i) => v.setUint8(i,b));
-    v.setUint32(4, 0, true);
+    const v   = new DataView(buf);
+    [80, 87, 65, 68].forEach((b, i) => v.setUint8(i, b)); // PWAD
+    v.setUint32(4, 0,  true);
     v.setUint32(8, 12, true);
     return new Uint8Array(buf);
   }
@@ -311,7 +318,6 @@ class GalleryWAD {
 
 // ── DOOM PLAYPAL palette (palette 0 of 14) ───────────────────────────────────
 // Standard DOOM palette, 256 RGB triplets. Used for image quantization.
-// Source: extracted from DOOM1.WAD PLAYPAL lump.
 GalleryWAD._DOOM_PALETTE = new Uint8Array([
   0,0,0, 31,23,11, 23,15,7, 75,75,75, 255,255,255, 27,27,27, 19,19,19, 11,11,11,
   7,7,7, 47,55,31, 35,43,15, 23,31,7, 15,23,0, 79,59,43, 71,51,35, 63,43,27,
