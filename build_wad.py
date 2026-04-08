@@ -96,6 +96,21 @@ def build_wad():
         (-896, 512, 0, 2001, 7), # Shotgun near start
     ]
 
+    # --- BSP Generation (Trivial single-node fallback) ---
+    segs_data = b''
+    for i, ld in enumerate(linedefs):
+        v1, v2, flags, special, tag, s1, s2 = ld
+        segs_data += struct.pack('<hhhhhh', v1, v2, 0, i, 0, 0)
+
+    ssectors_data = struct.pack('<hh', len(linedefs), 0)
+
+    nodes_data = struct.pack('<hhhh hhhh hhhh HH',
+        -1024, 0, 2048, 0,          # partition line
+        1024, -1024, -1024, 1024,   # right bbox
+        1024, -1024, -1024, 1024,   # left bbox
+        0x8000, 0x8000              # both children → ssector 0
+    )
+
     # --- Binary Assembly ---
     def pack_lump(name, data):
         return name.encode().ljust(8, b'\0'), data
@@ -106,9 +121,9 @@ def build_wad():
         pack_lump('LINEDEFS', b''.join(struct.pack('<hhhhhhh', *l) for l in linedefs)),
         pack_lump('SIDEDEFS', b''.join(struct.pack('<hh8s8s8sh', *s) for s in sidedefs)),
         pack_lump('VERTEXES', b''.join(struct.pack('<hh', *v) for v in vertices)),
-        pack_lump('SEGS',     b''),
-        pack_lump('SSECTORS', b''),
-        pack_lump('NODES',    b''),
+        pack_lump('SEGS',     segs_data),
+        pack_lump('SSECTORS', ssectors_data),
+        pack_lump('NODES',    nodes_data),
         pack_lump('SECTORS',  b''.join(struct.pack('<hh8s8shhh', s[0], s[1], s[2].ljust(8, b'\0'), s[3].ljust(8, b'\0'), s[4], s[5], s[6]) for s in sectors)),
         pack_lump('REJECT',   b'\0' * ((len(sectors)**2 + 7) // 8)),
         pack_lump('BLOCKMAP', b''),
