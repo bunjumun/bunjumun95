@@ -43,6 +43,9 @@ class DoomBridge {
 
     // Bind E-key handler so it can be removed if needed
     this._onKeyDown = this._onKeyDown.bind(this);
+
+    this._stopped = false;
+    this._started = false;
   }
 
   // --- HEAP32 player position scanning ---
@@ -91,6 +94,7 @@ class DoomBridge {
 
   // --- Polling loop ---
   _poll() {
+    if (this._stopped) return;
     if (this._playerXAddr === null) this._tryFindPlayerBase();
     const pos = this._getPlayerPos();
     if (pos) {
@@ -121,12 +125,23 @@ class DoomBridge {
     this._poll();
   }
 
+  stop() {
+    this._stopped = true;
+    document.removeEventListener('keydown', this._onKeyDown);
+  }
+
   start() {
+    this._stopped = false;
+    // Remove first to prevent duplicate listeners on restart
+    document.removeEventListener('keydown', this._onKeyDown);
     document.addEventListener('keydown', this._onKeyDown);
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => this._boot());
-    } else {
-      this._boot();
+    if (!this._started) {
+      this._started = true;
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => this._boot());
+      } else {
+        this._boot();
+      }
     }
   }
 }
