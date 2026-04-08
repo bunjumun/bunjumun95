@@ -67,6 +67,18 @@
   <script src="js/github-api.js?v=2"></script>
   <script src="js/admin.js?v=2"></script>
 
+  <script>
+    // Deep-linking support for Settings/Admin
+    // Allows bypassing UI obstructions via URL hash (e.g. index.html#admin)
+    const syncHashRoute = () => {
+      if (window.location.hash === '#admin' || window.location.hash === '#settings') {
+        document.getElementById('settings-btn')?.click();
+      }
+    };
+    window.addEventListener('hashchange', syncHashRoute);
+    window.addEventListener('load', () => setTimeout(syncHashRoute, 500));
+  </script>
+
   <!-- Bootstrap -->
   <script src="js/main.js?v=2"></script>
 

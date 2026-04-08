@@ -3,6 +3,19 @@
 
 ---
 
+## BLOCKMAP + Engine Arguments Fix — 2026-04-08T15:00:00Z
+
+### Changes:
+- **build_wad.py**: Implemented real `BLOCKMAP` generator with collision grid.
+- **js/doom-engine.js**: Added `arguments` array to force PrBoom to load `/doom/gallery.wad` and warp to MAP01.
+- **index.html**: Verified hash routing for `#admin` / `#settings` to bypass UI blockers.
+
+### Status:
+- WAD geometry: 36 linedefs, 2 sectors.
+- Ready for production push.
+
+---
+
 ## BSP + gallery-wad Fix — 2026-04-08T13:30:00Z
 
 ### Task A: gallery-wad.js

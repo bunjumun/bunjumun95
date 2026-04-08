@@ -41,7 +41,7 @@
 
 [0;34m▶ Starting HTTP Server[0m
   Checking for existing servers on port 8000...
-  [0;32m✅ HTTP server started on port 8000 (PID: 20818)[0m
+  [0;32m✅ HTTP server started on port 8000 (PID: 25951)[0m
 
 [0;34m▶ HTTP Server Load Test[0m
   [0;32m✅ index.html loads successfully (HTTP 200)[0m
@@ -89,4 +89,4 @@ Tests Failed: [0;31m0[0m
 [0;32m╔════════════════════════════════════════════════════════════════╗[0m
 [0;32m║  ✅ ALL TESTS PASSED — Ready for GitHub Pages deployment      ║[0m
 [0;32m╚════════════════════════════════════════════════════════════════╝[0m
-  Stopping HTTP server (PID: 20818)...
+  Stopping HTTP server (PID: 25951)...

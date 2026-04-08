@@ -90,7 +90,7 @@ def build_wad():
     build_inner_side(v_in_corners[2], v_in_corners[3], 4, True)   # North: 4 exhibits
     build_inner_side(v_in_corners[3], v_in_corners[0], 4, False)  # West:  4 exhibits
 
-    # 3. Things
+    # --- Things ---
     things = [
         (0, 0, 90, 1, 7),        # Player Start
         (-896, 512, 0, 2001, 7), # Shotgun near start
@@ -148,6 +148,41 @@ def build_wad():
     for linds in block_lists:
         offsets.append(current_offset)
         # List starts with 0 padding, ends with 0xFFFF
+        block_data += struct.pack('<H', 0) + b''.join(struct.pack('<H', i) for i in linds) + struct.pack('<H', 0xFFFF)
+        current_offset += 1 + len(linds) + 1
+    blockmap_lump = blockmap_header + struct.pack(f'<{len(offsets)}H', *offsets) + block_data
+
+
+    # --- BLOCKMAP Generation ---
+    block_size = 128
+    origin_x = -1024
+    origin_y = -1024
+    cols = (1024 - origin_x) // block_size
+    rows = (1024 - origin_y) // block_size
+    
+    block_lists = []
+    for r in range(rows):
+        for c in range(cols):
+            bx1, by1 = origin_x + c * block_size, origin_y + r * block_size
+            bx2, by2 = bx1 + block_size, by1 + block_size
+            
+            linds = []
+            for i, ld in enumerate(linedefs):
+                v1_idx, v2_idx = ld[0], ld[1]
+                x1, y1 = vertices[v1_idx]
+                x2, y2 = vertices[v2_idx]
+                lx1, lx2 = min(x1, x2), max(x1, x2)
+                ly1, ly2 = min(y1, y2), max(y1, y2)
+                if not (lx2 < bx1 or lx1 > bx2 or ly2 < by1 or ly1 > by2):
+                    linds.append(i)
+            block_lists.append(linds)
+
+    blockmap_header = struct.pack('<hhhh', origin_x, origin_y, cols, rows)
+    offsets = []
+    block_data = b''
+    current_offset = 4 + cols * rows
+    for linds in block_lists:
+        offsets.append(current_offset)
         block_data += struct.pack('<H', 0) + b''.join(struct.pack('<H', i) for i in linds) + struct.pack('<H', 0xFFFF)
         current_offset += 1 + len(linds) + 1
     blockmap_lump = blockmap_header + struct.pack(f'<{len(offsets)}H', *offsets) + block_data
