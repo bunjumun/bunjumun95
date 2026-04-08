@@ -1,128 +1,128 @@
 # GEMINI WORK LOOP — BUNJUMUN-DOOM
-**Created:** 2026-04-08
-**Your role on this team:**
+**Updated:** 2026-04-08 (post f1676ab)
 
 ```
-LLAMA   = Watchdog (monitors every 30min, reports STATUS, revives agents)
-CLAUDE  = Executor  (implements code, runs git, builds, commits/pushes)
-GEMINI  = Auditor + Heavy Lifter (reviews, verifies, generates content, drafts specs)
-```
-
----
-
-## YOUR LOOP (run continuously all day)
-
-```
-LOOP:
-  1. Read GEMINI-TASK.md
-  2. Is there a new task (creation date >= now)? YES → do it, go to step 3
-                                                  NO  → idle 10 min, restart
-  3. Write results to GEMINI-RESPONSE.md (append, newest first)
-  4. If task requires Claude action → write to GEMINI-TASK.md with section "FOR CLAUDE:"
-  5. Loop
+LLAMA   = Watchdog  — monitors every 30min, reports STATUS, revives agents
+CLAUDE  = Executor  — implements code, builds, commits, pushes
+GEMINI  = Auditor + Content Generator — reviews, verifies, drafts content
 ```
 
 ---
 
-## WHAT YOU DO (vs what Claude does)
+## YOUR LOOP (run continuously)
 
-### YOUR jobs (token-heavy, generative, analytical):
-- Read source files, audit them for bugs → report FINDINGS (don't rewrite files)
-- Verify live site behavior at https://bunjumun.github.io/bunjumun95
-- Generate gallery exhibit content (HTML snippets, descriptions) for gallery.json
-- Draft architecture plans, write specs, design new features
-- Research DOOM WAD format issues, PrBoom behavior
-- Generate placeholder exhibit content for zones 3–13
+```
+1. Read GEMINI-TASK.md for new task (date >= now)
+2. YES → work it → write results to GEMINI-RESPONSE.md (newest first)
+   NO  → idle 10 min → repeat
+3. If task needs Claude: write "FOR CLAUDE:" section clearly
+4. Repeat
+```
 
-### CLAUDE's jobs (never do these yourself):
-- Write/edit .js, .py, .html files
-- Run terminal commands (python3, git)
-- Commit and push to GitHub
+---
+
+## DIVISION OF LABOR
+
+### GEMINI does:
+- Read source files, audit for bugs — report findings (don't rewrite files)
+- Verify live site: https://bunjumun.github.io/bunjumun95
+- Generate exhibit HTML content for gallery.json zones 3–13
+- Draft architecture specs and feature plans
+- Report STATUS in the format below
+
+### CLAUDE does (never do these):
+- Write/edit .js .py .html files
+- Run terminal commands, git commits, pushes
 - Modify gallery.json directly
 
 ---
 
-## HOW TO REPORT (CRITICAL — follow exactly)
+## REPORT FORMAT (always use this)
 
-### For bugs: describe the fix, don't rewrite the whole file
+### Verification report:
 ```
-## BUG FOUND — [timestamp]
-File: js/exhibit.js
-Line: 209
-Issue: innerHTML = '' does not stop audio in iframes
-Fix: set iframe.src = '' before clearing innerHTML
-
-FOR CLAUDE: In exhibit.js close(), before `area.innerHTML = ''`, add:
-  area.querySelectorAll('iframe').forEach(f => f.src = '');
-```
-
-### For new content: provide the data, not the code
-```
-## NEW EXHIBIT CONTENT — [timestamp]
-Zone: 3 (index 2, tag 1003)
-Title: LAKEHORSE SOUNDCLOUD
-Type: widget
-Content: <iframe ...>
-Thumbnail: [base64 or URL]
-
-FOR CLAUDE: Add to gallery.json exhibits array at index 2.
-```
-
-### For verification results:
-```
-## VERIFY — [timestamp]
+## VERIFY — [ISO timestamp]
 STATUS: OK | FAIL
-gallery.wad bytes: 3201
-texture merge: OK
-walls visible: YES
-portal opens: YES
-console errors: NONE
+commit: [hash]
+gallery.wad bytes: [n]
+exhibits loaded: [n]/14
+portal opens: YES | NO
+ESC closes cleanly: YES | NO
+console errors: [list or NONE]
+notes: [anything surprising]
+```
+
+### Bug report:
+```
+## BUG — [timestamp]
+File: [path]
+Issue: [one line]
+Fix: [describe the change]
+
+FOR CLAUDE: [exact instruction, file + line]
+```
+
+### Content delivery:
+```
+## CONTENT — [timestamp]
+Zone: [index] (tag [1001+index])
+Title: [TITLE]
+Type: html
+Content: [full HTML string]
+
+FOR CLAUDE: paste into gallery.json exhibits array at index [n]
 ```
 
 ---
 
-## CURRENT PRIORITY QUEUE
+## CURRENT STATUS (f1676ab — 2026-04-08)
 
-Work through these in order. Mark each DONE in your response.
+### WORKING ✅
+- DOOM loads, renders, player moves
+- 3 real exhibits open correctly (MIDWEST PSYCH FEST, tree, LAKEHORSE)
+- X button closes portal → DOOM resumes
+- ESC closes portal → DOOM resumes (no menu leak — FIXED f1676ab)
+- Encoding clean (FIXED f1676ab)
+- 14 exhibit zones mapped, 14 frames registered
+- WAD: 32 linedefs, EX00TX–EX13TX textures
 
-### P1 — Verify commit d193984 is live and working
-- Open https://bunjumun.github.io/bunjumun95
-- Check console: gallery.wad should be 3201 bytes, texture merge should succeed
-- Report STATUS using the verify format above
+### OPEN TASKS (priority order)
 
-### P2 — Audit exhibit.js for the maze-canvas reference (Cycle 3 finding)
-- Read js/exhibit.js close() method
-- Does it reference 'maze-canvas'? Current code says it does NOT (Claude already fixed it)
-- Confirm or deny — report finding
+**P1 — Verify f1676ab is live**
+Force-reload https://bunjumun.github.io/bunjumun95, confirm:
+- exhibit.js?v=3 loads (check Network tab)
+- ESC closes portal without opening DOOM Setup menu
+- MAY 8–9 renders clean (no â€" chars)
+Report using VERIFY format above.
 
-### P3 — Generate exhibit content for zones 3–13 (the 11 placeholders)
-- Bunjumun's real projects need to fill these zones
-- For NOW: generate 11 varied "COMING SOON" exhibits with distinct Win95-style HTML
-- Each needs: title, type="html", content (styled HTML string), no thumbnail needed
-- Provide as JSON array entries for Claude to paste into gallery.json
+**P2 — Generate exhibit content for zones 3–13**
+Bunjumun needs 11 styled "COMING SOON" placeholder exhibits.
+Each should be distinct Win95-style HTML. Requirements:
+- Background: #111 or similar dark
+- Font: Courier New, monospace
+- Unique color accent per zone
+- Text: zone number, "COMING SOON", and a fake project title
+- No images (keep gallery.json small)
+- Max ~500 chars of HTML per exhibit
 
-### P4 — Audit gallery.json for bloat
-- gallery.json is 351KB, mostly from base64 thumbnails
-- Count how many bytes each exhibit's thumbnail takes
-- Report: which exhibits have oversized thumbnails (>50KB base64)
-- Recommend: should thumbnails be external URLs instead?
+Provide as JSON array items. Claude will paste them in.
+
+**P3 — Audit gallery.json thumbnail sizes**
+Check which exhibits have thumbnails > 50KB (base64).
+Report: exhibit index, title, thumbnail byte count.
+Recommend: should they be external URLs?
+
+**P4 — Verify LAKEHORSE (widget) on live site**
+The Bandcamp iframe won't load in local preview (CDN blocked).
+On live site it should work. Check and report.
 
 ---
 
-## RULES
+## CRITICAL RULES
 
-1. **Never replace entire files** — always describe targeted changes for Claude
-2. **Newest entry first** in GEMINI-RESPONSE.md
-3. **Tag everything "FOR CLAUDE:"** when you need implementation
-4. **No dummy code** — if you're unsure of exact syntax, describe the intent
-5. **Report what you actually see** — don't fabricate verification results
-6. If you hit a wall, write: `BLOCKED: [reason]` and move to next task
-
----
-
-## WHAT'S ALREADY DONE (don't redo)
-- ✅ stop()/start() on DoomBridge (d193984, v=4)
-- ✅ gallery.json has 14 exhibits (11 placeholders)
-- ✅ gallery.wad rebuilt — 32 linedefs, correct BSP, EX00TX–EX13TX textures
-- ✅ gallery-wad.js restored — generates all 14 textures, placeholders for missing thumbs
-- ✅ exhibit.js has NO maze-canvas reference (already clean)
+1. **Never rewrite entire JS files** — describe targeted line-level changes
+2. Your gallery-wad.js edits from earlier sessions are DISCARDED — Claude's v=3 is the correct version
+3. DOOM assets (doom.js, doom.wasm, doom1.data) are already in /doom/ — DO NOT re-download
+4. The site IS deployed and working — Gemini's "blocked" reports were stale
+5. Newest entry first in GEMINI-RESPONSE.md
+6. Tag all Claude work "FOR CLAUDE:"
