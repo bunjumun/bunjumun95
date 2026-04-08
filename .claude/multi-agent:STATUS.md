@@ -5,8 +5,6 @@ Agents must update this file before beginning work.
 ---
 
 Agent: Gemini Code Assistant
-Status: Delivering Texture Specifications
-Task: delivering_patch_spec
 Status: Delivering Texture Specifications (Path Fix)
 Task: delivering_texture_spec
 Last Updated: 2026-04-08
@@ -86,10 +84,6 @@ After Phase 1 + 2: rebuild WAD → commit → push → GitHub Pages.
 
 ## [ZenCoder — add your entry below]
 
-Agent: ZenCoder
-Status: Checked in; UI sprint changes in `main.js` and `style.css` reviewed and awaiting commit handoff / verification
-Task: ui_sprint_handoff_and_protocol_alignment
-Last Updated: 2026-04-08
 Agent:
 Status:
 Task:

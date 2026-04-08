@@ -7,13 +7,8 @@ Agents must claim tasks here before starting work.
 
 | ID | Task | Priority | Owner |
 |----|------|----------|-------|
-| T06 | Deliver DOOM picture/patch binary spec + PLAYPAL table | HIGH | [CLAIMED - GEMINI] |
-| T07 | Add player fingerprint spawn coords to build_wad.py, rebuild gallery.wad | HIGH | [CLAIMED - QWEN2CODER] |
-| T08 | Implement WASM heap memory scanner in doom-bridge.js | HIGH | [CLAIMED - QWEN2CODER] |
-| T09 | JS DOOM palette quantizer (Canvas2D → DOOM PLAYPAL 256 colors) | MED | [CLAIMED - GEMINI drafts, QWEN2CODER implements] |
-| T10 | WAD texture encoder (patch lumps + PNAMES + TEXTURE1 injection) | MED | [CLAIMED - QWEN2CODER] |
-| T04 | Write analysis/original_gallery_objective.md | LOW | [CLAIMED - ZENCODER] |
 | T05 | Write analysis/current_doom_behavior.md | LOW | UNCLAIMED |
+| T11 | Browser test — verify images on walls + exhibit trigger in live site | HIGH | UNCLAIMED |
 
 ---
 
@@ -21,8 +16,14 @@ Agents must claim tasks here before starting work.
 
 | ID | Task | Completed By | Notes |
 |----|------|-------------|-------|
-| T01 | Build real gallery.wad with 14 exhibit linedefs | Claude Code | 5,581 bytes, SEGS/NODES/BLOCKMAP complete — 2026-04-08 |
-| T02 | CSS class audit (Cycle 3) + exhibit.js close() pointer lock check | Gemini | maze-canvas ref was already fixed (commit abcdd48) — 2026-04-08 |
-| T03 | Verify exhibit.js close() uses doomCanvas | Claude Code | Confirmed correct, no fix needed — 2026-04-08 |
-| T11 | UI state machine: guide overlay, status text, direction hint, lock overlay | ZenCoder | main.js fully updated — 2026-04-08 |
-| T12 | Fix mouselock overlay appearing over settings menu | Claude Code | main.js fixed — 2026-04-08 |
+| T01 | Build real gallery.wad with 14 exhibit linedefs | Claude Code | 5,581 bytes — 2026-04-08 |
+| T02 | CSS class audit (Cycle 3) + pointer lock check | Gemini | maze-canvas ref already fixed — 2026-04-08 |
+| T03 | Verify exhibit.js close() uses doomCanvas | Claude Code | Confirmed correct — 2026-04-08 |
+| T04 | analysis/original_gallery_objective.md | ZenCoder | — |
+| T06 | DOOM picture/patch binary spec + PLAYPAL | Gemini | .claude/DOOM-PATCH-SPEC.md — 2026-04-08 |
+| T07 | Player fingerprint + zone coordinate map | Qwen2Coder | In doom-bridge.js commit cc79ee6 — 2026-04-08 |
+| T08 | HEAP32 memory scanner + E-key trigger in doom-bridge.js | Qwen2Coder | Committed cc79ee6 — 2026-04-08 |
+| T09 | Canvas2D palette quantizer (base64 → DOOM palette indices) | Qwen2Coder + Claude | Integrated in gallery-wad.js — 2026-04-08 |
+| T10 | WAD texture encoder (patch_t + PNAMES + TEXTURE1 injection) | Qwen2Coder + Claude | Integrated in gallery-wad.js — 2026-04-08 |
+| T11 | UI state machine (guide overlay, status text, direction hint) | ZenCoder | Committed 098820a — 2026-04-08 |
+| T12 | Fix mouselock overlay appearing over settings menu | Claude Code | Committed fcb078d — 2026-04-08 |

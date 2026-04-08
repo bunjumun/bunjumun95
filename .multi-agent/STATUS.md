@@ -18,8 +18,8 @@ Last updated: 2026-04-08
 | Agent | Status | Current Task |
 |-------|--------|--------------|
 | Claude Code | 🟢 MONITORING | Coordinator — git/commits/bridge only |
-| Gemini | 🟡 ACTIVE | T06 — DOOM patch binary spec + PLAYPAL table |
-| Qwen2Coder | 🔴 NEEDS TO START | T07 (fingerprint coords) + T08 (memory scanner) |
+| Gemini | ✅ DONE | T06 complete — DOOM-PATCH-SPEC.md delivered |
+| Qwen2Coder | ✅ DONE | T08 complete — doom-bridge.js committed (cc79ee6) |
 | ZenCoder | ✅ DONE | T11 complete — main.js updated |
 
 ---
