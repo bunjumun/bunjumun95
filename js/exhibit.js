@@ -179,10 +179,13 @@ class ExhibitPortal {
 
     this.shadow.getElementById('close-btn').addEventListener('click', () => this.close());
 
-    // ESC to close
+    // ESC to close — stop propagation so DOOM engine doesn't also receive the key
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen) this.close();
-    });
+      if (e.key === 'Escape' && this.isOpen) {
+        e.stopPropagation();
+        this.close();
+      }
+    }, true); // capture phase so we intercept before DOOM's listener
   }
 
   // ── Public API ───────────────────────────────────────────────────────────────
