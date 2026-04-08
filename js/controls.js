@@ -27,6 +27,32 @@ class FirstPersonControls {
     this._onLeave     = this._onLeave.bind(this);
 
     this._attachListeners();
+
+    // FPS mode state (pointer-lock shooting)
+    this._fpsMode = localStorage.getItem('fpsMode') === 'true';
+    this._onPointerLockChange = () => {
+      this._fpsMode = !!document.pointerLockElement;
+      localStorage.setItem('fpsMode', String(this._fpsMode));
+      document.body.classList.toggle('fps-active', this._fpsMode);
+    };
+    document.addEventListener('pointerlockchange', this._onPointerLockChange);
+
+    // F key: toggle FPS pointer-lock mode
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyF' && document.activeElement?.tagName !== 'INPUT') {
+        this.setFpsMode(!this._fpsMode);
+      }
+    });
+
+    // pointer-lock mousemove — high-precision camera look for FPS mode
+    document.addEventListener('mousemove', (e) => {
+      if (!this._fpsMode || !document.pointerLockElement) return;
+      this.euler.setFromQuaternion(this.camera.quaternion);
+      this.euler.y -= e.movementX * this.sensitivity;
+      this.euler.x -= e.movementY * this.sensitivity;
+      this.euler.x = Math.max(-Math.PI * 0.48, Math.min(Math.PI * 0.48, this.euler.x));
+      this.camera.quaternion.setFromEuler(this.euler);
+    });
   }
 
   // ── Listeners ───────────────────────────────────────────────────────────────
@@ -39,6 +65,14 @@ class FirstPersonControls {
     this.domElement.addEventListener('mousemove',  this._onMouseMove);
     this.domElement.addEventListener('mouseenter', this._onEnter);
     this.domElement.addEventListener('mouseleave', this._onLeave);
+  }
+
+  setFpsMode(enabled) {
+    if (enabled) {
+      this.domElement.requestPointerLock();
+    } else {
+      document.exitPointerLock();
+    }
   }
 
   _onKeyDown(e) { this.keys[e.code] = true; }

@@ -1,51 +1,159 @@
-# GEMINI TASK — Maze Menu + FPS Mode Implementation
+# GEMINI TASK — Win95 Menu + FPS Mode + Patches
 **Date:** 2026-04-08
-**Status:** AWAITING LLAMA SPEC — Llama is writing the full implementation brief now.
+**Repo:** https://github.com/bunjumun/bunjumun95 (branch: main)
+
+## CRITICAL RULES
+1. Read FULL file before editing. No partial reads.
+2. Patch specific sections only — do NOT rewrite entire files
+3. Bump `?v=N` in index.html for every changed JS file
+4. Write summary to `.claude/GEMINI-RESPONSE.md` when done
 
 ---
 
-## READ THIS FIRST
+## TASK 1: Replace `js/menu.js` with this complete file:
 
-**Wait for Llama to update this file with the full implementation spec.**
+```javascript
+// js/menu.js — Win95 Game Menu for BUNJUMUN-MAZE-95
+class GameMenu {
+  constructor() {
+    this.hostEl = document.createElement('div');
+    this.hostEl.id = 'menu-host';
+    document.body.appendChild(this.hostEl);
+    this.shadow = this.hostEl.attachShadow({ mode: 'open' });
+    this._visible = true;
+    this._build();
+    this._wire();
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && this._visible) this._start();
+    });
+  }
 
-Llama's output will appear in this file (or `.claude/LLAMA-RESPONSE.md`).
+  _build() {
+    this.shadow.innerHTML = `
+      <style>
+        .overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:#008080;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:'MS Sans Serif',Arial,sans-serif; }
+        .window { background:#C0C0C0;border:2px solid;border-color:#FFF #808080 #808080 #FFF;box-shadow:2px 2px 0 #000;min-width:300px; }
+        .titlebar { background:#000080;color:#FFF;padding:3px 6px;font-size:11px;font-weight:bold;display:flex;justify-content:space-between; }
+        .body { padding:20px 28px;text-align:center; }
+        .logo { background:#000080;color:#FFF;padding:10px 20px;font-size:14px;font-weight:bold;letter-spacing:2px;margin-bottom:16px;border:2px inset #808080; }
+        .btn { display:block;width:100%;margin:3px 0;padding:5px 10px;background:#C0C0C0;border:2px solid;border-color:#FFF #808080 #808080 #FFF;font-family:inherit;font-size:12px;cursor:pointer;text-align:left; }
+        .btn:active { border-color:#808080 #FFF #FFF #808080; }
+        .btn:hover { background:#D4D0C8; }
+        .footer { font-size:10px;color:#808080;margin-top:10px; }
+      </style>
+      <div class="overlay">
+        <div class="window">
+          <div class="titlebar"><span>BUNJUMUN GALLERY 95</span><span>▣</span></div>
+          <div class="body">
+            <div class="logo">BUNJUMUN<br>GALLERY 95</div>
+            <button class="btn" id="btn-start">&#9654; START EXPLORATION</button>
+            <button class="btn" id="btn-settings">&#9881; SETTINGS</button>
+            <button class="btn" id="btn-admin">&#128273; ADMIN CONSOLE</button>
+            <button class="btn" id="btn-fps">&#9670; FPS MODE  [F key in-maze]</button>
+            <button class="btn" id="btn-credits">&#9432; CREDITS</button>
+            <div class="footer" id="footer-msg">v1.0 &middot; Press ENTER to start</div>
+          </div>
+        </div>
+      </div>`;
+  }
 
-When Llama has posted their spec, you will implement:
-1. `js/menu.js` — Win95 game menu (Shadow DOM)
-2. `js/exhibit.js` — ESC key fix
-3. `js/admin.js` — Audio config panel
-4. `js/controls.js` — FPS mode toggle
-5. `js/main.js` — Wire menu:start event before maze init
-6. `index.html` — Add menu-host div + load menu.js
+  _wire() {
+    const s = this.shadow;
+    s.getElementById('btn-start').onclick    = () => this._start();
+    s.getElementById('btn-settings').onclick = () => this._msg('Settings coming soon.');
+    s.getElementById('btn-admin').onclick    = () => { this._start(); document.dispatchEvent(new CustomEvent('admin:open')); };
+    s.getElementById('btn-fps').onclick      = () => this._msg('FPS MODE: Press F while in maze to toggle pointer-lock shooting.');
+    s.getElementById('btn-credits').onclick  = () => this._msg('BUNJUMUN GALLERY 95 v1.0 \u2014 bunjumun.com \u2014 Built with Three.js');
+  }
+
+  _msg(text) { this.shadow.getElementById('footer-msg').textContent = text; }
+
+  _start() {
+    this._visible = false;
+    this.hostEl.style.display = 'none';
+    document.dispatchEvent(new CustomEvent('menu:start'));
+  }
+
+  show() { this.hostEl.style.display = ''; this._visible = true; }
+  hide() { this._start(); }
+}
+
+window.GameMenu = GameMenu;
+```
 
 ---
 
-## CRITICAL RULES (apply before any edits)
+## TASK 2: Patch `js/main.js`
 
-1. **Read the FULL file before editing.** No partial reads.
-2. **Do NOT rewrite entire JS files.** Patch only the specific sections described.
-3. **Bump `?v=N` cache-busting** in `index.html` for every changed JS file.
-4. **Shadow DOM pattern** — all UI lives in a shadow root (see exhibit.js for example).
-5. **Respond to `.claude/GEMINI-RESPONSE.md`** when all tasks are done.
-6. **Never touch `gallery.json`** — already populated with 14 DOOM-era exhibits.
+Find and replace:
+```js
+const selectedMode = await showModeSelector();
+```
+With:
+```js
+const menu = new GameMenu();
+await new Promise(resolve => document.addEventListener('menu:start', resolve, { once: true }));
+```
 
----
-
-## PROJECT CONTEXT
-
-- Repo: https://github.com/bunjumun/bunjumun95 (branch: main)
-- Live site: https://bunjumun.github.io/bunjumaze
-- Stack: Vanilla JS + Three.js r128 CDN, no build step, no framework
-- The maze is procedurally generated (recursive backtracker)
-- Exhibits live in `gallery.json` — the curator algorithm places them on walls automatically
-- Win95 aesthetic throughout: #C0C0C0 / #000080 / MS Sans Serif
+Also add after admin console is created (find `new AdminConsole(`):
+```js
+document.addEventListener('admin:open', () => admin.open());
+```
 
 ---
 
-## WAITING FOR LLAMA
+## TASK 3: Patch `js/exhibit.js` — ESC fix
 
-Llama will update this file (or post to LLAMA-RESPONSE.md) with:
-- Full code specs for each file change
-- FPS mode activation recommendation
+Find the ESC keydown listener. Change to capture phase + stopPropagation:
+```js
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && this.isOpen) {
+    e.stopPropagation();
+    this.close();
+  }
+}, true);
+```
+Also: remove any `requestPointerLock()` call inside `close()`.
 
-Check `.claude/LLAMA-RESPONSE.md` for the FPS decision before implementing FPS mode.
+---
+
+## TASK 4: Patch `js/controls.js` — F key FPS toggle
+
+Add to constructor after `_attachListeners()`:
+```js
+this._fpsMode = localStorage.getItem('fpsMode') === 'true';
+document.addEventListener('pointerlockchange', () => {
+  this._fpsMode = !!document.pointerLockElement;
+  document.body.classList.toggle('fps-active', this._fpsMode);
+});
+```
+
+Add method:
+```js
+setFpsMode(enabled) {
+  this._fpsMode = enabled;
+  localStorage.setItem('fpsMode', String(enabled));
+  if (enabled) this.domElement.requestPointerLock();
+  else document.exitPointerLock();
+  document.body.classList.toggle('fps-active', enabled);
+}
+```
+
+Inside `_onKeyDown`, add at the top:
+```js
+if (e.code === 'KeyF') { this.setFpsMode(!this._fpsMode); return; }
+```
+
+---
+
+## TASK 5: Patch `index.html`
+
+1. Add before `<script src="js/main.js">`:
+   `<script src="js/menu.js?v=1"></script>`
+2. Bump versions: `exhibit.js?v=2`, `controls.js?v=2`, `main.js?v=2`
+3. Add to CSS: `body.fps-active #crosshair { color: red; opacity: 1; }`
+
+---
+
+## FPS DECISION: Option C (F key) — recommended by gemma3:4b analysis
+Best balance of accessibility + simplicity for a portfolio site.

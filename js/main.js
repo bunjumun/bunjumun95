@@ -9,8 +9,18 @@
   const bar = document.getElementById('loading-bar');
   function progress(pct) { if (bar) bar.style.width = pct + '%'; }
 
-  // ── 0. Mode Selector ────────────────────────────────────────────────────────
-  const selectedMode = await showModeSelector();
+  // ── 0. Game Menu ────────────────────────────────────────────────────────────
+  // Hide loading screen while menu is shown; re-show it after START is clicked
+  const loadingEl = document.getElementById('loading');
+  if (loadingEl) loadingEl.style.display = 'none';
+
+  const menu = new GameMenu();
+  menu.show();
+  await new Promise(resolve => document.addEventListener('menu:start', resolve, { once: true }));
+  const selectedMode = 'maze';
+
+  // Re-show loading screen for maze generation
+  if (loadingEl) { loadingEl.style.display = 'flex'; loadingEl.style.opacity = '1'; }
 
   // ── 1. Load gallery & calculate dynamic maze size ──────────────────────────
   progress(10);
@@ -54,6 +64,16 @@
   progress(88);
   const portal = new ExhibitPortal(document.getElementById('exhibit-host'), engine);
   const admin  = new AdminConsole(document.getElementById('admin-host'), engine, portal);
+
+  // Wire admin:open event (from game menu Admin Console button)
+  document.addEventListener('admin:open', () => admin.open());
+
+  // ESC in maze (when no portal open) → return to menu (ChatGPT suggestion)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !portal.isOpen) {
+      document.dispatchEvent(new CustomEvent('menu:open'));
+    }
+  });
 
   // ── 7.5. DOOM systems (lazy — only wired, not loaded yet) ───────────────────
   const audioMgr   = new AudioManager();
@@ -164,11 +184,10 @@
   engine.start();
 
   // Hide loading screen
-  const loading = document.getElementById('loading');
-  if (loading) {
-    loading.style.transition = 'opacity 0.4s';
-    loading.style.opacity    = '0';
-    setTimeout(() => { loading.style.display = 'none'; }, 420);
+  if (loadingEl) {
+    loadingEl.style.transition = 'opacity 0.4s';
+    loadingEl.style.opacity    = '0';
+    setTimeout(() => { loadingEl.style.display = 'none'; }, 420);
   }
 
   console.log(

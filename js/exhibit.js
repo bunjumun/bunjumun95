@@ -179,10 +179,13 @@ class ExhibitPortal {
 
     this.shadow.getElementById('close-btn').addEventListener('click', () => this.close());
 
-    // ESC to close
+    // ESC to close — capture phase + stopPropagation so engine doesn't receive it
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen) this.close();
-    });
+      if (e.key === 'Escape' && this.isOpen) {
+        e.stopPropagation();
+        this.close();
+      }
+    }, true);
   }
 
   // ── Public API ───────────────────────────────────────────────────────────────
@@ -210,10 +213,7 @@ class ExhibitPortal {
 
     this.engine.resume();
 
-    // Re-acquire pointer lock after a brief delay (browser requires user gesture)
-    setTimeout(() => {
-      document.getElementById('maze-canvas')?.requestPointerLock();
-    }, 100);
+    // Maze uses free-mouse mode — no pointer lock needed here
   }
 
   // ── Content Rendering ────────────────────────────────────────────────────────

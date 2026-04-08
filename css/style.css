@@ -402,6 +402,12 @@ input[type="text"], input[type="password"], textarea {
   user-select: none;
 }
 
+/* FPS mode active — red crosshair */
+body.fps-active #crosshair {
+  color: rgba(255, 60, 60, 0.9);
+  text-shadow: 0 0 6px #f00;
+}
+
 /* ── Settings Button ──────────────────────────────────────────────────── */
 #settings-btn {
   position: fixed;
