@@ -42,9 +42,7 @@ class AdminConsole {
 
         .win95 {
           background: #C0C0C0;
-          border: 2px solid;
-          border-color: #FFF #808080 #808080 #FFF;
-          box-shadow: 3px 3px 0 #000;
+          box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px grey, inset 2px 2px #dfdfdf;
           width: min(94vw, 680px);
           max-height: 90vh;
           display: flex;
@@ -601,8 +599,6 @@ class AdminConsole {
     this.isOpen = false;
     this.host.style.display = 'none';
     this.engine.resume();
-    setTimeout(() => {
-      document.getElementById('maze-canvas')?.requestPointerLock();
-    }, 100);
+    // Free-mouse mode — no pointer lock needed
   }
 }
